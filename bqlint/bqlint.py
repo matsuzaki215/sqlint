@@ -17,7 +17,7 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-MESSAGE_INDENT_NUM = 'indent steps must be {} times'
+MESSAGE_INDENT_NUM = 'indent steps must be {} multiples'
 MESSAGE_DUPLICATED_SPACE = 'too many spaces'
 MESSAGE_COMMA_HEAD = 'comma must be head of line'
 MESSAGE_COMMA_END = 'comma must be end of line'

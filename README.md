@@ -29,7 +29,7 @@ $ bqlint query/*sql
 
 check all following variations in default
 
-- indent steps are N times.(default: four times)
+- indent steps are N multiples.(default: N = 4)
 
 - duplicated spaces.
 
@@ -37,7 +37,7 @@ check all following variations in default
 
 - reserved keywords in BigQuery is capital or not (default: not capital).
 
-- comma is head(end) of the line which connect some columns or conditions. (default: end)
+- comma is head(end) of the line which connect some columns or conditions. (default: head)
 
 
 - white-spaces are not before ) or after (
