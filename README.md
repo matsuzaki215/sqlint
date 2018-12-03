@@ -1,5 +1,5 @@
 # bqlint
-BigQuery SQL Parse and Lint
+This is a SQL parser and linter for Standard SQL(BigQuery).
 
 ## Install
 
@@ -15,14 +15,24 @@ pyenv rehash
 
 ## Usage
 
-```
-$ bqlint query.sql
-```
-
-or
+Command line
 
 ```
 $ bqlint query/*sql
+```
+
+Python module
+
+```
+$ python
+>>> from bqlint import parse, check
+>>> stmt = 'SELECT id From user_table  where user_table.age >10'
+>>>
+>>> parse(stmt)
+[[<Keyword: 'SELECT'>, <Whitespace: ' '>, <Identifier: 'id'>, <Whitespace: ' '>, <Keyword: 'From'>, <Whitespace: ' '>, <Identifier: 'user_table'>, <Whitespace: '  '>, <Keyword: 'where'>, <Whitespace: ' '>, <Identifier: 'user_table.age'>, <Whitespace: ' '>, <Operator: '>'>, <Identifier: '10'>]]
+>>>
+>>> check(stmt)
+['(L1, 1): reserved keywords in BQ must be lower case: SELECT -> select', '(L1, 11): reserved keywords in BQ must be lower case: From -> from', '(L1, 26): too many spaces', '(L1, 49): whitespace must be after binary operator: >10']
 ```
 
 ## Checking variations
