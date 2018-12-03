@@ -66,7 +66,7 @@ bqlint/tests/data/query001.sql:(L2, 6): comma must be head of line
 bqlint/tests/data/query001.sql:(L7, 6): comma must be head of line
 bqlint/tests/data/query002.sql:(L1, 1): reserved keywords in BQ must be lower case: SELECT -> select
 bqlint/tests/data/query002.sql:(L3, 7): reserved keywords in BQ must be lower case: COUNT -> count
-bqlint/tests/data/query003.sql:(L2, 1): indent steps must be 4 times (5)
+bqlint/tests/data/query003.sql:(L2, 1): indent steps must be 4 multiples (5)
 bqlint/tests/data/query004.sql:(L5, 18): too many spaces
 bqlint/tests/data/query005.sql:(L2, 7): whitespace must not be after bracket: (
 bqlint/tests/data/query005.sql:(L2, 22): whitespace must not be before bracket: )
