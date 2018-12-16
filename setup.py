@@ -1,18 +1,23 @@
 """The setup script."""
 
 import re
-from setuptools import setup
+import pathlib
+from setuptools import setup, find_packages
 from os import path
 
-root_dir = path.abspath(path.dirname(__file__))
+# The directory containing this file
+root_dir = pathlib.Path(__file__).parent
 
 
 def _requirements():
     return [name.rstrip() for name in open(path.join(root_dir, 'requirements.txt')).readlines()]
 
 
-with open("README.md") as f:
-    long_description = f.read()
+try:
+    with open(path.join(root_dir, 'README.rst')) as f:
+        long_description = f.read()
+except IOError:
+    long_description = ''
 
 # read __init__
 with open(path.join(root_dir, 'sqlint', '__init__.py')) as f:
@@ -29,7 +34,7 @@ setup(
     url='https://github.com/shigeru0215/sqlint',
     description='Simple Sql Linter',
     long_description=long_description,
-    packages=['sqlint', 'sqlint.parser'],
+    packages=find_packages(exclude=("tests",)),
     test_suite='tests',
     install_requires=_requirements(),
     classifiers=[

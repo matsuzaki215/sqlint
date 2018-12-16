@@ -3,14 +3,24 @@ This is a SQL parser and linter for Standard SQL(BigQuery).
 
 ## Install
 
+pip, 
+
+```bash
+$ pip install sqlint
 ```
+
+repository, 
+
+```bash
+$ git clone git@github.com:shigeru0215/sqlint.git
+$ cd sqlint
 $ python setup.py install
 ```
 
-if you use pyenv.
+ - if you use pyenv,
 
-```
-pyenv rehash
+```bash
+$ pyenv rehash
 ```
 
 ## Usage
