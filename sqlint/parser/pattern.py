@@ -3,7 +3,7 @@
 
 import re
 
-from bqlint.parser.config import (
+from sqlint.parser.config import (
     RESERVED_KEYWORDS,
     RESERVED_FUNCTIONS,
     BINARY_OPERATORS_ESCAPED,

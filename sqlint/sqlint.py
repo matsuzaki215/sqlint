@@ -6,14 +6,14 @@ import logging
 import os
 
 # TODO: read setting file
-from bqlint.config import (
+from sqlint.config import (
     COMMA_POSITION_IS_END,
     KEYWORDS_IS_CAPITAL,
     INDENT_NUM
 )
-from bqlint.message import *
-from bqlint.parser.parser import parse as parser_exec
-from bqlint.parser.token import Token
+from sqlint.message import *
+from sqlint.parser.parser import parse as parser_exec
+from sqlint.parser.token import Token
 
 
 def parse(stmt):
@@ -72,7 +72,7 @@ def check(stmt):
             if i != 0:
                 result.extend(_check_duplicated_spaces(line_num, position, token))
 
-            # Check whether reserved keywords in BQ is capital or not (default: not capital).
+            # Check whether reserved keywords is capital or not (default: not capital).
             result.extend(_check_capital_keyword(line_num, position, token))
 
             # Check whether comma, which connects some columns or conditions, is head(end) of line.

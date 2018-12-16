@@ -3,7 +3,7 @@
 
 import sys
 
-from bqlint.cli import main
+from sqlint.cli import main
 
 if __name__ == '__main__':
     sys.exit(main())

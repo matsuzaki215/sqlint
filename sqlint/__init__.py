@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from bqlint import bqlint
-from bqlint import cli
-from bqlint import config
-from bqlint import message
+from sqlint import sqlint
+from sqlint import cli
+from sqlint import config
+from sqlint import message
 
 __version__ = '0.0.0'
 
 __all__ = [
-    'bqlint'
+    'sqlint'
 ]
 
 
@@ -19,7 +19,7 @@ def parse(stmt):
     :return:
     """
 
-    return bqlint.parse(stmt)
+    return sqlint.parse(stmt)
 
 
 def check(stmt):
@@ -29,4 +29,4 @@ def check(stmt):
     :return:
     """
 
-    return bqlint.check(stmt)
+    return sqlint.check(stmt)
