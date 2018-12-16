@@ -4,8 +4,8 @@
 import re
 import os
 
-from bqlint.parser.token import Token
-from bqlint.parser import pattern
+from sqlint.parser.token import Token
+from sqlint.parser import pattern
 
 
 def parse(stmt):

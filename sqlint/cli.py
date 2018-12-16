@@ -5,7 +5,7 @@ import click
 import os
 import logging
 
-from bqlint.bqlint import check
+from sqlint.sqlint import check
 
 # setting logger
 logger = logging.getLogger(__name__)

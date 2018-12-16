@@ -4,7 +4,7 @@ import re
 from setuptools import setup
 from os import path
 
-package_name = 'bqlint'
+package_name = 'sqlint'
 
 root_dir = path.abspath(path.dirname(__file__))
 
@@ -25,8 +25,8 @@ setup(
     # license=_license,
     author='shigeru',
     author_email='matsuzaki215@gmail.com',
-    url='https://github.com/shigeru0215/bqlint',
-    description='ref: https://github.com/shigeru0215/bqlint',
+    url='https://github.com/shigeru0215/sqlint',
+    description='ref: https://github.com/shigeru0215/sqlint',
     packages=[package_name],
     test_suite='tests',
     install_requires=_requirements(),
@@ -43,7 +43,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            'bqlint=bqlint.__main__:main',
+            'sqlint=sqlint.__main__:main',
         ]
     }
 )
