@@ -4,8 +4,6 @@ import re
 from setuptools import setup
 from os import path
 
-package_name = 'bqlint'
-
 root_dir = path.abspath(path.dirname(__file__))
 
 
@@ -14,20 +12,20 @@ def _requirements():
 
 
 # read __init__
-with open(path.join(root_dir, package_name, '__init__.py')) as f:
+with open(path.join(root_dir, 'sqlint', '__init__.py')) as f:
     init_text = f.read()
     version = re.search(r'__version__\s*=\s*[\'\"](.+?)[\'\"]', init_text).group(1)
 assert version
 
 setup(
-    name=package_name,
+    name='sqlint',
     version=version,
     # license=_license,
     author='shigeru',
     author_email='matsuzaki215@gmail.com',
-    url='https://github.com/shigeru0215/bqlint',
-    description='ref: https://github.com/shigeru0215/bqlint',
-    packages=[package_name],
+    url='https://github.com/shigeru0215/sqlint',
+    description='ref: https://github.com/shigeru0215/sqlint',
+    packages=['sqlint', 'sqlint.parser'],
     test_suite='tests',
     install_requires=_requirements(),
     classifiers=[
@@ -43,7 +41,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            'bqlint=bqlint.__main__:main',
+            'sqlint=sqlint.__main__:main',
         ]
     }
 )
