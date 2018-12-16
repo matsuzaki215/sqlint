@@ -11,6 +11,9 @@ def _requirements():
     return [name.rstrip() for name in open(path.join(root_dir, 'requirements.txt')).readlines()]
 
 
+with open("README.md") as f:
+    long_description = f.read()
+
 # read __init__
 with open(path.join(root_dir, 'sqlint', '__init__.py')) as f:
     init_text = f.read()
@@ -20,11 +23,12 @@ assert version
 setup(
     name='sqlint',
     version=version,
-    # license=_license,
+    license="MIT",
     author='shigeru',
     author_email='matsuzaki215@gmail.com',
     url='https://github.com/shigeru0215/sqlint',
-    description='ref: https://github.com/shigeru0215/sqlint',
+    description='Simple Sql Linter',
+    long_description=long_description,
     packages=['sqlint', 'sqlint.parser'],
     test_suite='tests',
     install_requires=_requirements(),
