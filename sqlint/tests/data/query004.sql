@@ -1,5 +1,5 @@
 select
     a
-    , b
+    , b  # comment
 from
     test_table as  t1

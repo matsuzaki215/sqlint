@@ -70,7 +70,7 @@ def check(stmt):
                 result.extend(_check_indent_spaces(line_num, position, token))
             # Check duplicated spaces except indents.
             if i != 0:
-                result.extend(_check_duplicated_spaces(line_num, position, token))
+                result.extend(_check_duplicated_spaces(line_num, position, tokens, i))
 
             # Check whether reserved keywords is capital or not (default: not capital).
             result.extend(_check_capital_keyword(line_num, position, token))
@@ -79,13 +79,13 @@ def check(stmt):
             if bracket_nest_count == 0:
                 result.extend(_check_comma_position(line_num, position, tokens, i))
 
-            # Check whether whitespace is after and not before comma.
+            # Check whether a whitespace exists after and not before comma.
             result.extend(_check_whitespace_comma(line_num, position, tokens, i))
 
-            # Check whether white-space is not before ) or after (
+            # Check whether a whitespace exists not before ) or after (
             result.extend(_check_whitespace_brackets(line_num, position, tokens, i))
 
-            # Check whether a whitespace is before and after binary operators
+            # Check whether a whitespace exist before and after binary operators
             # (e.g.) =, <, >, <=. >=. <>, !=, +, -, *, /, %
             result.extend(_check_whitespace_operators(line_num, position, tokens, i))
 
@@ -126,8 +126,20 @@ def _check_indent_spaces(line_num, pos, token):
     return []
 
 
-def _check_duplicated_spaces(line_num, pos, token):
-    if token.kind != Token.WHITESPACE:
+def _check_duplicated_spaces(line_num, pos, tokens, token_index):
+    """
+
+    :param line_num:
+    :param pos:
+    :param tokens:
+    :param token_index:
+    :return:
+    """
+
+    token = tokens[token_index]
+
+    if token.kind != Token.WHITESPACE or \
+       (token_index+1 < len(tokens) and tokens[token_index+1].kind == Token.COMMENT):
         return []
 
     if len(token) >= 2:
