@@ -101,6 +101,7 @@ def check(stmt):
 
             # TODO: Not Implemented yet.
             # join on での不等号の順番（親テーブル < 日付）
+            # join on での改行
             # 予約語ごとに、適切なインデントがされているか
             # サブクエリは外に出す
             # エイリアスが予約語と一致していないか

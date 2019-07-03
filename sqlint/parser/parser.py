@@ -65,7 +65,7 @@ def _tokenize(text, is_comment_line=False):
             is_comment_line = True
             continue
 
-        # comment single(#)
+        # comment single(#, --)
         match = re.match(pattern.COMMENT_SINGLE, text)
         if match:
             if len(match.group(1)) > 0:
