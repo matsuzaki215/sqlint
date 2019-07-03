@@ -5,11 +5,21 @@
  */
 function getBigQueryTokens() {
     // gets HTMLCollection
-    let elements = document.getElementsByClassName("CodeMirror-line");
+    let elements = document.getElementsByClassName("CodeMirror-lines");
+
+    console_log("elements;");
+
+    console_log(elements.length);
+    console_log(elements);
+    console_log(elements[0].innerHTML);
 
     if (elements.length === 0)
         // raise error
+        console_log("elements is blank");
         return [];
+
+    console_log("elements is not blank");
+    return [];
 
     let result = [];
     elements = Array.from( elements );
@@ -25,12 +35,12 @@ function getBigQueryTokens() {
          * - if some keywords has HTML tags inside, that tags are html encoded.
          *
          */
-        console.log("children; " + 0 + " : " + children[0].innerHTML);
+        console_log("children; " + 0 + " : " + children[0].innerHTML);
 
 
         let target = children[0].innerHTML;
         while (target.length > 0) {
-            console.log("target = " + target);
+            console_log("target = " + target);
 
             // get whitespaces
             let spaces = regexSpaces.exec(target);
@@ -45,7 +55,7 @@ function getBigQueryTokens() {
                 break;
             }
 
-            console.log("match: `" + match + "`");
+            console_log("match: `" + match + "`");
 
             if(match[2] != 'newline') {
               result.push(new BigQueryToken(match[3], match[2]));
@@ -122,7 +132,7 @@ function _tokenize(text, isInComment, isInSelect) {
 
     // check multi-line comment : /* comment */
     while (text.length > 0) {
-        console.log(`[parse] : ${text}`);
+        console_log(`[parse] : ${text}`);
 
         let result = [];
 

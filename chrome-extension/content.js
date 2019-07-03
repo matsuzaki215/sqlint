@@ -3,13 +3,14 @@
  * @param event
  */
 window.document.onkeydown = function(event){
-    if (event.key !== 'Enter')
+    if(! check_shortcut(event)) {
         return;
+    }
 
     let rowCodes = getBigQueryTokens();
 
     for(let i = 0; i < rowCodes.length; i++) {
-        console.log(i + " : " + rowCodes[i]);
+        console_log(i + " : " + rowCodes[i]);
     }
 
     // parse
@@ -19,3 +20,11 @@ window.document.onkeydown = function(event){
         console.log(i + " : " + parsedTokens[i]);
     }
 };
+
+function check_shortcut(event) {
+    if (event.ctrlKey && event.shiftKey && event.key == 'F') {
+        return true;
+    }
+
+    return false;
+}
