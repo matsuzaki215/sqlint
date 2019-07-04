@@ -1,5 +1,4 @@
 python: &python
-  <<: *defaults
   docker:
     - image: python:3.6.6
   working_directory: ~/circleci
