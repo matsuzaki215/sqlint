@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/shigeru0215/sqlint/tree/develop.svg?style=svg)](https://circleci.com/gh/shigeru0215/sqlint/tree/develop)
+
 # sqlint
 This is a SQL parser and linter for Standard SQL(BigQuery).
 
