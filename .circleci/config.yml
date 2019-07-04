@@ -2,6 +2,7 @@ python: &python
   docker:
     - image: python:3.6.6
   working_directory: ~/circleci
+  docker_layer_caching: true
 
 jobs:
   stylecheck_and_test:
@@ -29,6 +30,7 @@ jobs:
           name: lint
           command: |
             . venv/bin/activate
+            ls
             flake8 .
 
 workflows:
