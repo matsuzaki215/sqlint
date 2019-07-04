@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from sqlint import sqlint
-from sqlint import cli
-from sqlint import config
-from sqlint import message
 
 __version__ = '0.1.1'
 

@@ -1,1 +1,10 @@
 Click==7.0
+# requirements for test
+pytest==3.6.3
+pytest-cov==2.6.0
+codecov==2.0.15
+flake8==3.5.0
+mock==2.0.0
+Pympler==0.6
+memory-profiler==0.55.0
+psutil==5.5.1
