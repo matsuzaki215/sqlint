@@ -31,7 +31,7 @@ jobs:
           command: |
             . venv/bin/activate
             ls
-            flake8 .
+            flake8 --exclude=venv .
 
 workflows:
   version: 2
