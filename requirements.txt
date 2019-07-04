@@ -1,4 +1,5 @@
 Click==7.0
+configparser==3.7
 # requirements for test
 pytest==3.6.3
 pytest-cov==2.6.0

@@ -1,14 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""
 # TODO: read setting file
 from sqlint.config import (
     COMMA_POSITION_IS_END,
     KEYWORDS_IS_CAPITAL,
     INDENT_NUM
 )
+"""
 from sqlint.message import (
-    MESSAGE_INDENT_NUM,
+    MESSAGE_INDENT_STEPS,
     MESSAGE_DUPLICATED_SPACE,
     MESSAGE_COMMA_HEAD,
     MESSAGE_COMMA_END,
@@ -19,34 +21,42 @@ from sqlint.message import (
     MESSAGE_WHITESPACE_AFTER_OPERATOR,
     MESSAGE_WHITESPACE_BEFORE_OPERATOR,
     MESSAGE_KEYWORD_UPPER,
+    MESSAGE_KEYWORD_UPPER_HEAD,
     MESSAGE_KEYWORD_LOWER,
     MESSAGE_JOIN_TABLE,
     MESSAGE_JOIN_CONTEXT,
     MESSAGE_BREAK_LINE,
 )
-from sqlint.parser.parser import parse as parser_exec
+from sqlint.parser.parser import parse as exec_parser
 from sqlint.parser.token import Token
 
 
 def parse(stmt):
     """
 
-    :param stmt:
-    :return:
+    Args:
+        stmt:
+
+    Returns:
+
     """
-    return parser_exec(stmt)
+    return exec_parser(stmt)
 
 
-def check(stmt):
+def check(stmt, config):
     """
 
-    :param stmt:
-    :return:
+    Args:
+        stmt:
+        config:
+
+    Returns:
+
     """
     result = []
 
     # parse sql context
-    parsed_tokens = parser_exec(stmt)
+    parsed_tokens = exec_parser(stmt)
 
     blank_line_num = 0
     line_num = 1
@@ -79,17 +89,17 @@ def check(stmt):
 
             # Check whether indent steps are N times.
             if i == 0:
-                result.extend(_check_indent_spaces(line_num, position, token))
+                result.extend(_check_indent_spaces(line_num, position, token, config))
             # Check duplicated spaces except indents.
             if i != 0:
                 result.extend(_check_duplicated_spaces(line_num, position, tokens, i))
 
             # Check whether reserved keywords is capital or not (default: not capital).
-            result.extend(_check_capital_keyword(line_num, position, token))
+            result.extend(_check_capital_keyword(line_num, position, token, config))
 
             # Check whether comma, which connects some columns or conditions, is head(end) of line.
             if bracket_nest_count == 0:
-                result.extend(_check_comma_position(line_num, position, tokens, i))
+                result.extend(_check_comma_position(line_num, position, tokens, i, config))
 
             # Check whether a whitespace exists after and not before comma.
             result.extend(_check_whitespace_comma(line_num, position, tokens, i))
@@ -129,12 +139,14 @@ def check(stmt):
     return result
 
 
-def _check_indent_spaces(line_num, pos, token):
+def _check_indent_spaces(line_num, pos, token, config):
     if token.kind != Token.WHITESPACE:
         return []
 
-    if len(token) % INDENT_NUM != 0:
-        return ['(L{}, {}): {} ({})'.format(line_num, pos, MESSAGE_INDENT_NUM.format(INDENT_NUM), len(token))]
+    indent_steps = config.get('indent-steps', 4)
+
+    if len(token) % indent_steps != 0:
+        return ['(L{}, {}): {} ({})'.format(line_num, pos, MESSAGE_INDENT_STEPS.format(indent_steps), len(token))]
 
     return []
 
@@ -142,13 +154,15 @@ def _check_indent_spaces(line_num, pos, token):
 def _check_duplicated_spaces(line_num, pos, tokens, token_index):
     """
 
-    :param line_num:
-    :param pos:
-    :param tokens:
-    :param token_index:
-    :return:
-    """
+    Args:
+        line_num:
+        pos:
+        tokens:
+        token_index:
 
+    Returns:
+
+    """
     token = tokens[token_index]
 
     if token.kind != Token.WHITESPACE or \
@@ -161,52 +175,70 @@ def _check_duplicated_spaces(line_num, pos, tokens, token_index):
     return []
 
 
-def _check_capital_keyword(line_num, pos, token):
+def _check_capital_keyword(line_num, pos, token, config):
     """
 
-    :param line_num:
-    :param pos:
-    :param token:
-    :return:
+    Args:
+        line_num:
+        pos:
+        token:
+
+    Returns:
+
     """
+
     if token.kind != Token.KEYWORD:
         return []
 
-    if KEYWORDS_IS_CAPITAL and token.word != token.word.upper():
+    style = config.get('keyword-style', 'lower')
+    word = token.word
+
+    if style == 'upper-all' and word != word.upper():
         return ['(L{}, {}): {}: {} -> {}'.format(line_num, pos,
                                                  MESSAGE_KEYWORD_UPPER,
-                                                 token.word,
-                                                 token.word.upper())]
-    if not KEYWORDS_IS_CAPITAL and token.word != token.word.lower():
+                                                 word,
+                                                 word.upper())]
+    if style == 'upper-head' and word[0] != word[0].upper():
+        return ['(L{}, {}): {}: {} -> {}'.format(line_num, pos,
+                                                 MESSAGE_KEYWORD_UPPER_HEAD,
+                                                 word,
+                                                 word[0].upper() + word[1:])]
+    if style == 'lower' and word != word.lower():
         return ['(L{}, {}): {}: {} -> {}'.format(line_num, pos,
                                                  MESSAGE_KEYWORD_LOWER,
-                                                 token.word,
-                                                 token.word.lower())]
+                                                 word,
+                                                 word.lower())]
 
     return []
 
 
-def _check_comma_position(line_num, pos, tokens, token_index):
+def _check_comma_position(line_num, pos, tokens, token_index, config):
     """
 
-    :param line_num:
-    :param pos:
-    :param tokens:
-    :param token_index:
-    :return:
+    Args:
+        line_num:
+        pos:
+        tokens:
+        token_index:
+        config:
+
+    Returns:
+
     """
     token = tokens[token_index]
 
     if token.kind != Token.COMMA:
         return []
 
-    if COMMA_POSITION_IS_END and token_index <= len(token) - 2:
+    comma_position = config.get('comma-position')
+
+    if comma_position == 'head' and not _is_first_token(tokens, token_index):
+        return ['(L{}, {}): {}'.format(line_num, pos, MESSAGE_COMMA_HEAD)]
+
+    if comma_position == 'end' and token_index <= len(token) - 2:
         for tk in tokens[token_index + 1:]:
             if tk.kind != Token.WHITESPACE and tk.kind != Token.COMMENT:
                 return ['(L{}, {}): {}'.format(line_num, pos, MESSAGE_COMMA_END)]
-
-    if not COMMA_POSITION_IS_END and not _is_first_token(tokens, token_index):
-        return ['(L{}, {}): {}'.format(line_num, pos, MESSAGE_COMMA_HEAD)]
 
     return []
 
@@ -214,11 +246,14 @@ def _check_comma_position(line_num, pos, tokens, token_index):
 def _check_whitespace_comma(line_num, pos, tokens, token_index):
     """
 
-    :param line_num:
-    :param pos:
-    :param tokens:
-    :param token_index:
-    :return:
+    Args:
+        line_num:
+        pos:
+        tokens:
+        token_index:
+
+    Returns:
+
     """
     token = tokens[token_index]
 
@@ -241,11 +276,14 @@ def _check_whitespace_comma(line_num, pos, tokens, token_index):
 def _check_whitespace_brackets(line_num, pos, tokens, token_index):
     """
 
-    :param line_num:
-    :param pos:
-    :param tokens:
-    :param token_index:
-    :return:
+    Args:
+        line_num:
+        pos:
+        tokens:
+        token_index:
+
+    Returns:
+
     """
     token = tokens[token_index]
 
@@ -267,11 +305,15 @@ def _check_whitespace_brackets(line_num, pos, tokens, token_index):
 
 def _check_whitespace_operators(line_num, pos, tokens, token_index):
     """
-    :param line_num:
-    :param pos:
-    :param tokens:
-    :param token_index:
-    :return:
+
+    Args:
+        line_num:
+        pos:
+        tokens:
+        token_index:
+
+    Returns:
+
     """
     token = tokens[token_index]
 
@@ -322,11 +364,14 @@ def _check_join_context(line_num, pos, tokens, token_index):
     """
     valid contexts
         [left outer join], [inner join] or [cross join]
-    :param line_num:
-    :param pos:
-    :param tokens:
-    :param token_index:
-    :return:
+    Args:
+        line_num:
+        pos:
+        tokens:
+        token_index:
+
+    Returns:
+
     """
     token = tokens[token_index]
 
@@ -355,11 +400,14 @@ def _check_join_context(line_num, pos, tokens, token_index):
 def _check_break_line(line_num, pos, tokens, token_index):
     """
     break line at 'and', 'or', 'on' (except between A and B)
-    :param line_num:
-    :param pos:
-    :param tokens:
-    :param token_index:
-    :return:
+    Args:
+        line_num:
+        pos:
+        tokens:
+        token_index:
+
+    Returns:
+
     """
     token = tokens[token_index]
 
@@ -382,10 +430,12 @@ def _check_break_line(line_num, pos, tokens, token_index):
 
 def _is_first_token(tokens, token_index):
     """
+    Args:
+        tokens:
+        token_index:
 
-    :param tokens:
-    :param token_index:
-    :return:
+    Returns:
+
     """
 
     if token_index == 0:
