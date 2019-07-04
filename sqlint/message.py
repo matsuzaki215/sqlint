@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-MESSAGE_INDENT_NUM = 'indent steps must be {} multiples'
+MESSAGE_INDENT_STEPS = 'indent steps must be {} multiples'
 MESSAGE_DUPLICATED_SPACE = 'too many spaces'
 MESSAGE_COMMA_HEAD = 'comma must be head of line'
 MESSAGE_COMMA_END = 'comma must be end of line'
@@ -12,6 +12,7 @@ MESSAGE_WHITESPACE_BEFORE_BRACKET = 'whitespace must not be before bracket: )'
 MESSAGE_WHITESPACE_AFTER_OPERATOR = 'whitespace must be after binary operator'
 MESSAGE_WHITESPACE_BEFORE_OPERATOR = 'whitespace must be after binary operator'
 MESSAGE_KEYWORD_UPPER = 'reserved keywords must be upper case'
+MESSAGE_KEYWORD_UPPER_HEAD = 'a head of reserved keywords must be upper case'
 MESSAGE_KEYWORD_LOWER = 'reserved keywords must be lower case'
 MESSAGE_JOIN_TABLE = 'table_name must be at the same line as join context'
 MESSAGE_JOIN_CONTEXT = 'join context must be [left outer join], [inner join] or [cross join]'
