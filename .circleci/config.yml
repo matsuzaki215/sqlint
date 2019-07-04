@@ -30,7 +30,6 @@ jobs:
           name: lint
           command: |
             . venv/bin/activate
-            ls
             flake8 --exclude=venv .
 
 workflows:
