@@ -1,17 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import click
-import logging
-import os
-
 # TODO: read setting file
 from sqlint.config import (
     COMMA_POSITION_IS_END,
     KEYWORDS_IS_CAPITAL,
     INDENT_NUM
 )
-from sqlint.message import *
+from sqlint.message import (
+    MESSAGE_INDENT_NUM,
+    MESSAGE_DUPLICATED_SPACE,
+    MESSAGE_COMMA_HEAD,
+    MESSAGE_COMMA_END,
+    MESSAGE_WHITESPACE_AFTER_COMMA,
+    MESSAGE_WHITESPACE_BEFORE_COMMA,
+    MESSAGE_WHITESPACE_AFTER_BRACKET,
+    MESSAGE_WHITESPACE_BEFORE_BRACKET,
+    MESSAGE_WHITESPACE_AFTER_OPERATOR,
+    MESSAGE_WHITESPACE_BEFORE_OPERATOR,
+    MESSAGE_KEYWORD_UPPER,
+    MESSAGE_KEYWORD_LOWER,
+    MESSAGE_JOIN_TABLE,
+    MESSAGE_JOIN_CONTEXT,
+    MESSAGE_BREAK_LINE,
+)
 from sqlint.parser.parser import parse as parser_exec
 from sqlint.parser.token import Token
 

@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import re
-import os
 
 from sqlint.parser.token import Token
 from sqlint.parser import pattern
