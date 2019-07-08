@@ -113,6 +113,10 @@ def check(stmt):
     if blank_line_num >= 2:
         result.append('(L{}, {}): {} ({})'.format(line_num, 0, 'too many blank lines', blank_line_num))
 
+    # Display 'Yey' message if there's no mistake.
+    if len(result) == 0:
+        result.append('Yey! You made no mistake🍺')
+
     return result
 
 
