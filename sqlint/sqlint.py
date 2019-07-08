@@ -331,7 +331,7 @@ def _check_whitespace_operators(line_num, pos, tokens, token_index):
     # before ope
     if token_index >= 1:
         pre_token = tokens[token_index - 1]
-        if pre_token.kind != Token.WHITESPACE and pre_token.word != '(':
+        if pre_token.kind != Token.WHITESPACE and pre_token.word != '(' and pre_token.word[-1] != '.':
             result.append('(L{}, {}): {}: {}'.format(line_num, pos, MESSAGE_WHITESPACE_BEFORE_OPERATOR,
                                                      '{}{}'.format(pre_token.word, token.word)))
 
