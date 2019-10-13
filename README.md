@@ -29,13 +29,13 @@ $ pyenv rehash
 
 Command line
 
-```
+```bash
 $ sqlint query/*sql
 ```
 
-Python module
+REPL
 
-```
+```bash
 $ python
 >>> from sqlint import parse, check
 >>> stmt = 'SELECT id From user_table  where user_table.age >10'
@@ -45,6 +45,17 @@ $ python
 >>>
 >>> check(stmt)
 ['(L1, 1): reserved keywords must be lower case: SELECT -> select', '(L1, 11): reserved keywords must be lower case: From -> from', '(L1, 26): too many spaces', '(L1, 49): whitespace must be after binary operator: >10']
+```
+
+Dockerfile
+
+```bash
+$ docker build -t sqlint:latest .
+ ...
+$ docker run -it sqlint:latset /bin/bash
+xxxxx:/work # python3 -m sqlint sqlint/tests/data/query001.sql 
+sqlint/tests/data/query001.sql:(L2, 6): comma must be head of line
+sqlint/tests/data/query001.sql:(L7, 6): comma must be head of line
 ```
 
 ## Checking variations
