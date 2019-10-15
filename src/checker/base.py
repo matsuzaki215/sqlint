@@ -326,8 +326,8 @@ class JoinChecker(Checker):
                 if token.kind != Token.KEYWORD or token.word.upper() != 'JOIN':
                     continue
 
-                # ignores the token next to 'JOIN' is identifier
-                if idx < len(leaf.contents)-1 and leaf.contents[idx+1].kind != Token.IDENTIFIER:
+                # ignores the token next to 'JOIN' is identifier which may be table.
+                if idx < len(leaf.contents)-1 and leaf.contents[idx+1].kind == Token.IDENTIFIER:
                     continue
 
                 """
@@ -372,7 +372,7 @@ class JoinChecker(Checker):
 
                 # concat keyword concerned with join
                 join_contexts = [token.word]
-                expected: str = ''
+                expected: str = expected_list['inner']
                 for tk in reversed(leaf.contents[:idx]):
                     if tk.kind == Token.WHITESPACE:
                         continue
@@ -387,7 +387,7 @@ class JoinChecker(Checker):
                 join_context_str = ' '.join(join_contexts)
                 if join_context_str.upper() not in ['INNER JOIN', 'RIGHT OUTER JOIN', 'LEFT OUTER JOIN', 'CROSS JOIN']:
                     params = {'index': idx, 'actual': join_context_str, 'expected': expected}
-                    v = violation.JoinTableViolation(leaf, **params)
+                    v = violation.JoinContextViolation(leaf, **params)
                     violation_list.append(v)
 
             violation_list.extend(JoinChecker._check_context(leaf, expected_list))

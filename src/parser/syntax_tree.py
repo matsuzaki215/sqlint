@@ -93,7 +93,7 @@ class Node:
             length of texts
         """
         index = max(index, 0)
-        return sum([len(token) for token in self.contents[0: index]])
+        return sum([len(token) for token in self.contents[0: index]])+1
 
     def trip_kind(self, *args) -> 'Node':
         return self.ltrip_kind(*args).rtrip_kind(*args)
