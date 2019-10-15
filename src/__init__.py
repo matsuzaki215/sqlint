@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
-from sqlint import sqlint
+from .checker.old import check
 
 __version__ = '0.1.2'
 
 __all__ = [
-    'sqlint'
+    'check'
 ]
 
-
+'''
 def parse(stmt):
     """
 
@@ -16,7 +14,7 @@ def parse(stmt):
     :return:
     """
 
-    return sqlint.parse(stmt)
+    return api.parse(stmt)
 
 
 def check(stmt):
@@ -26,4 +24,5 @@ def check(stmt):
     :return:
     """
 
-    return sqlint.check(stmt)
+    return api.check(stmt)
+'''

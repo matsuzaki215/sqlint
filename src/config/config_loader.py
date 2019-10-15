@@ -1,5 +1,10 @@
 import os
-from configparser import ConfigParser, NoSectionError, NoOptionError
+from typing import Optional
+from configparser import (
+    ConfigParser,
+    NoSectionError,
+    NoOptionError
+)
 
 # section name in ini file
 SECTION = 'sqlint'
@@ -16,22 +21,26 @@ DEFAULT_INI = os.path.join(BASE_DIR, 'default.ini')
 
 
 class ConfigLoader(object):
-    def __init__(self, config_file=None):
-        # default config
-        self.default_config = ConfigParser()
-        self.default_config.read(DEFAULT_INI)
-
-        # user config
-        self.user_config_file = config_file
-        self.user_config = ConfigParser()
-        if self.user_config_file and self.user_config_file != DEFAULT_INI:
-            self.user_config.read(self.user_config_file)
-
-        # load configs
+    def __init__(self, config_file: Optional[str] = DEFAULT_INI):
         self.values = {}
-        self._load()
 
-    def _get_with_type(self, config_parser, name, _type):
+        # load default configs
+        default_config = ConfigParser()
+        default_config.read(DEFAULT_INI)
+        self._load(default_config)
+
+        # load user config
+        self.user_config_file: Optional[str]
+        if config_file is not None and config_file != DEFAULT_INI:
+            self.user_config_file = config_file
+            user_config = ConfigParser()
+            user_config.read(config_file)
+
+            # load user configs
+            self._load(user_config)
+
+    @staticmethod
+    def _get_with_type(config_parser: ConfigParser, name: str, _type: type):
         """
 
         Args:
@@ -50,10 +59,10 @@ class ConfigLoader(object):
             return config_parser.getboolean(SECTION, name)
 
         # type is str or others
-        return self.default_config.get(SECTION, name)
+        return config_parser.get(SECTION, name)
 
-    def _load(self):
-        """
+    def _load(self, config_parser: ConfigParser):
+        """Loads config values
 
         Returns:
 
@@ -61,30 +70,15 @@ class ConfigLoader(object):
         # load default settings
         for name, _type in NAME_TYPES.items():
             try:
-                self.values[name] = self._get_with_type(self.default_config, name, _type)
+                self.values[name] = self._get_with_type(config_parser, name, _type)
             except NoSectionError as e:
                 raise e
             except NoOptionError as e:
                 # raise Error
                 raise e
             except ValueError as e:
-                # raise Error
+                # TODO: raise config Error
                 raise e
-
-        if self.user_config_file is None:
-            return
-
-        # load user settings
-        for name, _type in NAME_TYPES.items():
-            try:
-                self.values[name] = self._get_with_type(self.user_config, name, _type)
-            except NoSectionError:
-                continue
-            except NoOptionError:
-                continue
-            except ValueError as e:
-                # raise Error
-                print(e)
 
     def get(self, name, default=None):
         """

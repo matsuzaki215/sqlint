@@ -60,29 +60,28 @@ sqlint/tests/data/query001.sql:(L7, 6): comma must be head of line
 
 ## Checking variations
 
-check all following variations in default
+Check if sql statement violates following rules.
 
-- indent steps are N multiples.(default: N = 4)
+- indent steps are N multiples (default: N = 4).
 
-- duplicated spaces.
+- duplicated whitespaces except indent.
 
 - duplicated blank lines.
 
-- reserved keywords is capital or not (default: not capital).
+- reserved keywords is capital case or not (default: not capital).
 
-- comma is head(end) of the line which connect some columns or conditions. (default: head)
+- comma is head(or end) of the line which connects some columns or conditions (default: head).
 
+- a whitespace are not before `)` or after `(`.
 
-- white-spaces are not before ) or after (
+- a whitespace is before and after binary operators.
+  - (e.g.) `=`, `<`, `>`, `<=`. `>=`. `<>`, `!=`, `+`, `-`, `*`, `/`, `%`
 
-- a whitespace is before and after binary operators
-  - (e.g.) =, <, >, <=. >=. <>, !=, +, -, *, /, %
+- the table name is at the same line as join context.
 
-- the table name is at the same line as join context
+- join contexts are written fully, for example `left outer join, `inner join or `cross join`.
 
-- join context is [left outer join], [inner join] or [cross join]
-
-- indent before 'on', 'or', 'and' (except between a and b)
+- whether new line starts at 'on', 'or', 'and' context (except `between`).
 
 ## Futures
 - table_name alias doesn't equal reserved functions

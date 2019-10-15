@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 MESSAGE_INDENT_STEPS = 'indent steps must be {} multiples'
 MESSAGE_DUPLICATED_SPACE = 'too many spaces'
 MESSAGE_COMMA_HEAD = 'comma must be head of line'

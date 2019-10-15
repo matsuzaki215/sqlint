@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 # BigQuery reserved keywords
 # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical?hl=ja#reserved-keywords
 RESERVED_KEYWORDS = [
@@ -30,8 +27,8 @@ RESERVED_FUNCTIONS = [
     'VAR_SAMP', 'VARIANCE',
     # approximate-aggregate-functions
     'APPROX_COUNT_DISTINCT', 'APPROX_QUANTILES', 'APPROX_TOP_COUNT', 'APPROX_TOP_SUM',
+    # TODO: Not Supported.
     # hyperloglog-functions
-    # TODO: Not Suppored.
     # numbering-functions
     'RANK', 'DENSE_RANK', 'PERCENT_RANK', 'CUME_DIST', 'NTILE', 'ROW_NUMBER',
     # bit-functions
@@ -71,11 +68,11 @@ RESERVED_FUNCTIONS = [
     'TIMESTAMP_MILLIS', 'TIMESTAMP_MICROS', 'UNIX_SECONDS', 'UNIX_MILLIS', 'UNIX_MICROS',
     # security-functions
     'SESSION_USER'
-    # net-functions
     # TODO: Not Supported.
+    # net-functions
 ]
 
 BINARY_OPERATORS_ESCAPED = [
     '=', '<', '>', '!',
-    '\+', '\-', '\*', '/', '%',
+    r'\+', r'\-', r'\*', '/', '%',
 ]

@@ -20,13 +20,13 @@ except IOError:
     long_description = ''
 
 # read __init__
-with open(path.join(root_dir, 'sqlint', '__init__.py')) as f:
+with open(path.join(root_dir, 'src', '__init__.py')) as f:
     init_text = f.read()
     version = re.search(r'__version__\s*=\s*[\'\"](.+?)[\'\"]', init_text).group(1)
 assert version
 
 setup(
-    name='sqlint',
+    name='src',
     version=version,
     license="MIT",
     author='shigeru',
@@ -50,7 +50,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            'sqlint=sqlint.__main__:main',
+            'sqlint=src.__main__:main',
         ]
     }
 )

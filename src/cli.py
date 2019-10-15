@@ -1,15 +1,14 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import click
 import os
 import logging
 
-from sqlint.sqlint import check
-from sqlint.config.config_loader import (
+from .config.config_loader import (
     DEFAULT_INI,
     ConfigLoader
 )
+
+from .parser.syntax_tree import SyntaxTree
+from .checker.tree import check as check_tree
 
 # setting logger
 logger = logging.getLogger(__name__)
@@ -47,9 +46,14 @@ def main(files, config):
         if os.path.isdir(f):
             logger.warning(IsADirectoryError(f))
 
+        # with open(f, 'r') as fp:
+        #     for message in check(fp.read(), cl):
+        #         logger.info('{}:{}'.format(f, message))
+
         with open(f, 'r') as fp:
-            for message in check(fp.read(), cl):
-                logger.info('{}:{}'.format(f, message))
+            tree = SyntaxTree(fp.read())
+            # print(tree.stmtftree())
+            check_tree(tree, cl)
 
 
 if __name__ == '__main__':

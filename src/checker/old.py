@@ -1,46 +1,16 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
-"""
 # TODO: read setting file
-from sqlint.config import (
+"""
+from .config import (
     COMMA_POSITION_IS_END,
     KEYWORDS_IS_CAPITAL,
     INDENT_NUM
 )
 """
-from sqlint.message import (
-    MESSAGE_INDENT_STEPS,
-    MESSAGE_DUPLICATED_SPACE,
-    MESSAGE_COMMA_HEAD,
-    MESSAGE_COMMA_END,
-    MESSAGE_WHITESPACE_AFTER_COMMA,
-    MESSAGE_WHITESPACE_BEFORE_COMMA,
-    MESSAGE_WHITESPACE_AFTER_BRACKET,
-    MESSAGE_WHITESPACE_BEFORE_BRACKET,
-    MESSAGE_WHITESPACE_AFTER_OPERATOR,
-    MESSAGE_WHITESPACE_BEFORE_OPERATOR,
-    MESSAGE_KEYWORD_UPPER,
-    MESSAGE_KEYWORD_UPPER_HEAD,
-    MESSAGE_KEYWORD_LOWER,
-    MESSAGE_JOIN_TABLE,
-    MESSAGE_JOIN_CONTEXT,
-    MESSAGE_BREAK_LINE,
-)
-from sqlint.parser.parser import parse as exec_parser
-from sqlint.parser.token import Token
 
-
-def parse(stmt):
-    """
-
-    Args:
-        stmt:
-
-    Returns:
-
-    """
-    return exec_parser(stmt)
+from src import message as msg
+from src.parser.parser import parse as exec_parser
+from src.parser.token import Token
 
 
 def check(stmt, config):
@@ -150,7 +120,7 @@ def _check_indent_spaces(line_num, pos, token, config):
     indent_steps = config.get('indent-steps', 4)
 
     if len(token) % indent_steps != 0:
-        return ['(L{}, {}): {} ({})'.format(line_num, pos, MESSAGE_INDENT_STEPS.format(indent_steps), len(token))]
+        return ['(L{}, {}): {} ({})'.format(line_num, pos, msg.MESSAGE_INDENT_STEPS.format(indent_steps), len(token))]
 
     return []
 
@@ -174,7 +144,7 @@ def _check_duplicated_spaces(line_num, pos, tokens, token_index):
         return []
 
     if len(token) >= 2:
-        return ['(L{}, {}): {}'.format(line_num, pos, MESSAGE_DUPLICATED_SPACE)]
+        return ['(L{}, {}): {}'.format(line_num, pos, msg.MESSAGE_DUPLICATED_SPACE)]
 
     return []
 
@@ -199,17 +169,17 @@ def _check_capital_keyword(line_num, pos, token, config):
 
     if style == 'upper-all' and word != word.upper():
         return ['(L{}, {}): {}: {} -> {}'.format(line_num, pos,
-                                                 MESSAGE_KEYWORD_UPPER,
+                                                 msg.MESSAGE_KEYWORD_UPPER,
                                                  word,
                                                  word.upper())]
     if style == 'upper-head' and word[0] != word[0].upper():
         return ['(L{}, {}): {}: {} -> {}'.format(line_num, pos,
-                                                 MESSAGE_KEYWORD_UPPER_HEAD,
+                                                 msg.MESSAGE_KEYWORD_UPPER_HEAD,
                                                  word,
                                                  word[0].upper() + word[1:])]
     if style == 'lower' and word != word.lower():
         return ['(L{}, {}): {}: {} -> {}'.format(line_num, pos,
-                                                 MESSAGE_KEYWORD_LOWER,
+                                                 msg.MESSAGE_KEYWORD_LOWER,
                                                  word,
                                                  word.lower())]
 
@@ -237,12 +207,12 @@ def _check_comma_position(line_num, pos, tokens, token_index, config):
     comma_position = config.get('comma-position')
 
     if comma_position == 'head' and not _is_first_token(tokens, token_index):
-        return ['(L{}, {}): {}'.format(line_num, pos, MESSAGE_COMMA_HEAD)]
+        return ['(L{}, {}): {}'.format(line_num, pos, msg.MESSAGE_COMMA_HEAD)]
 
     if comma_position == 'end' and token_index <= len(token) - 2:
         for tk in tokens[token_index + 1:]:
             if tk.kind != Token.WHITESPACE and tk.kind != Token.COMMENT:
-                return ['(L{}, {}): {}'.format(line_num, pos, MESSAGE_COMMA_END)]
+                return ['(L{}, {}): {}'.format(line_num, pos, msg.MESSAGE_COMMA_END)]
 
     return []
 
@@ -268,11 +238,11 @@ def _check_whitespace_comma(line_num, pos, tokens, token_index):
 
     # after comma
     if token_index <= len(tokens) - 3 and tokens[token_index + 1].kind != Token.WHITESPACE:
-        result.append('(L{}, {}): {}'.format(line_num, pos, MESSAGE_WHITESPACE_AFTER_COMMA))
+        result.append('(L{}, {}): {}'.format(line_num, pos, msg.MESSAGE_WHITESPACE_AFTER_COMMA))
 
     # before comma
     if token_index >= 2 and tokens[token_index - 1].kind == Token.WHITESPACE:
-        result.append('(L{}, {}): {}'.format(line_num, pos, MESSAGE_WHITESPACE_BEFORE_COMMA))
+        result.append('(L{}, {}): {}'.format(line_num, pos, msg.MESSAGE_WHITESPACE_BEFORE_COMMA))
 
     return result
 
@@ -297,12 +267,12 @@ def _check_whitespace_brackets(line_num, pos, tokens, token_index):
     # after (
     if token.word == '(':
         if token_index <= len(tokens) - 3 and tokens[token_index + 1].kind == Token.WHITESPACE:
-            return ['(L{}, {}): {}'.format(line_num, pos, MESSAGE_WHITESPACE_AFTER_BRACKET)]
+            return ['(L{}, {}): {}'.format(line_num, pos, msg.MESSAGE_WHITESPACE_AFTER_BRACKET)]
 
     # before )
     if token.word == ')':
         if token_index >= 2 and tokens[token_index - 1].kind == Token.WHITESPACE:
-            return ['(L{}, {}): {}'.format(line_num, pos, MESSAGE_WHITESPACE_BEFORE_BRACKET)]
+            return ['(L{}, {}): {}'.format(line_num, pos, msg.MESSAGE_WHITESPACE_BEFORE_BRACKET)]
 
     return []
 
@@ -330,13 +300,13 @@ def _check_whitespace_operators(line_num, pos, tokens, token_index):
     if token_index <= len(tokens) - 2:
         next_token = tokens[token_index + 1]
         if next_token.kind != Token.WHITESPACE and next_token.kind != Token.COMMENT and next_token.word != ')':
-            result.append('(L{}, {}): {}: {}'.format(line_num, pos, MESSAGE_WHITESPACE_AFTER_OPERATOR,
+            result.append('(L{}, {}): {}: {}'.format(line_num, pos, msg.MESSAGE_WHITESPACE_AFTER_OPERATOR,
                                                      '{}{}'.format(token.word, next_token.word)))
     # before ope
     if token_index >= 1:
         pre_token = tokens[token_index - 1]
         if pre_token.kind != Token.WHITESPACE and pre_token.word != '(' and pre_token.word[-1] != '.':
-            result.append('(L{}, {}): {}: {}'.format(line_num, pos, MESSAGE_WHITESPACE_BEFORE_OPERATOR,
+            result.append('(L{}, {}): {}: {}'.format(line_num, pos, msg.MESSAGE_WHITESPACE_BEFORE_OPERATOR,
                                                      '{}{}'.format(pre_token.word, token.word)))
 
     return result
@@ -361,7 +331,7 @@ def _check_join_table(line_num, pos, tokens, token_index):
             if tk.kind == Token.IDENTIFIER:
                 return []
 
-    return ['(L{}, {}): {}'.format(line_num, pos, MESSAGE_JOIN_TABLE)]
+    return ['(L{}, {}): {}'.format(line_num, pos, msg.MESSAGE_JOIN_TABLE)]
 
 
 def _check_join_context(line_num, pos, tokens, token_index):
@@ -396,7 +366,7 @@ def _check_join_context(line_num, pos, tokens, token_index):
     join_context_str = ' '.join(join_contexts)
 
     if join_context_str.upper() not in ['LEFT OUTER JOIN', 'INNER JOIN', 'CROSS JOIN']:
-        return ['(L{}, {}): {}: {}'.format(line_num, pos, MESSAGE_JOIN_CONTEXT, join_context_str)]
+        return ['(L{}, {}): {}: {}'.format(line_num, pos, msg.MESSAGE_JOIN_CONTEXT, join_context_str)]
 
     return []
 
@@ -429,7 +399,7 @@ def _check_break_line(line_num, pos, tokens, token_index):
             if tk.word.upper() == 'BETWEEN':
                 return []
 
-    return ['(L{}, {}): {}: {}'.format(line_num, pos, MESSAGE_BREAK_LINE, token.word)]
+    return ['(L{}, {}): {}: {}'.format(line_num, pos, msg.MESSAGE_BREAK_LINE, token.word)]
 
 
 def _is_first_token(tokens, token_index):
