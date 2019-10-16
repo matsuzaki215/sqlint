@@ -53,9 +53,9 @@ Dockerfile
 $ docker build -t sqlint:latest .
  ...
 $ docker run -it sqlint:latset /bin/bash
-xxxxx:/work # python3 -m sqlint sqlint/tests/data/query001.sql 
-sqlint/tests/data/query001.sql:(L2, 6): comma must be head of line
-sqlint/tests/data/query001.sql:(L7, 6): comma must be head of line
+xxxxx:/work # python3 -m sqlint sqlint/tests/data/query005.sql 
+sqlint/tests/data/query005.sql:(L2, 6): comma must be head of line
+sqlint/tests/data/query005.sql:(L7, 6): comma must be head of line
 ```
 
 ## Checking variations
@@ -93,17 +93,17 @@ Check if sql statement violates following rules.
 ## Sample
 
 ```
-$ sqlint sqlint/tests/data/*
-sqlint/tests/data/query001.sql:(L2, 6): comma must be head of line
-sqlint/tests/data/query001.sql:(L7, 6): comma must be head of line
-sqlint/tests/data/query002.sql:(L1, 1): reserved keywords must be lower case: SELECT -> select
-sqlint/tests/data/query002.sql:(L3, 7): reserved keywords must be lower case: COUNT -> count
-sqlint/tests/data/query003.sql:(L2, 1): indent steps must be 4 multiples (5)
-sqlint/tests/data/query004.sql:(L5, 18): too many spaces
-sqlint/tests/data/query005.sql:(L2, 7): whitespace must not be after bracket: (
-sqlint/tests/data/query005.sql:(L2, 22): whitespace must not be before bracket: )
-sqlint/tests/data/query006.sql:(L3, 8): whitespace must be after binary operator: +c
-sqlint/tests/data/query006.sql:(L3, 8): whitespace must be after binary operator: b+
+$ sqlint sqlint/tests/samples/*
+tests/samples/query001.sql (L2, 1): indent steps must be 4 multiples, but 5 spaces
+tests/samples/query002.sql (L6, 16): there are multiple whitespaces
+tests/samples/query003.sql (L2, 7): whitespace must not be after bracket: ( 
+tests/samples/query003.sql (L2, 22): whitespace must not be before bracket:  )
+tests/samples/query004.sql (L3, 8): whitespace must be before binary operator: b+
+tests/samples/query004.sql (L3, 8): whitespace must be after binary operator: +c
+tests/samples/query005.sql (L2, 6): comma must be head of line
+tests/samples/query005.sql (L7, 6): comma must be head of line
+tests/samples/query006.sql (L1, 1): reserved keywords must be lower case: SELECT -> select
+tests/samples/query006.sql (L3, 7): reserved keywords must be lower case: Count -> count
 sqlint/tests/data/query007.sql:(L8, 16): table_name must be at the same line as join context
 sqlint/tests/data/query008.sql:(L6, 5): join context must be [left outer join], [inner join] or [cross join]: join
 sqlint/tests/data/query008.sql:(L10, 10): join context must be [left outer join], [inner join] or [cross join]: left join

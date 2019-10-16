@@ -7,6 +7,9 @@ from .config.config_loader import (
     ConfigLoader
 )
 
+from typing import Dict, List
+
+from .checker.violation import Violation
 from .parser.syntax_tree import SyntaxTree
 from .checker.tree import check as check_tree
 
@@ -39,6 +42,8 @@ def main(files, config):
 
     cl = ConfigLoader(config)
 
+    violations: Dict[str, List[Violation]] = {}
+
     for f in files:
         if not os.path.exists(f):
             logger.warning(FileNotFoundError(f))
@@ -51,9 +56,15 @@ def main(files, config):
         #         logger.info('{}:{}'.format(f, message))
 
         with open(f, 'r') as fp:
+            # constructs syntax tree
             tree = SyntaxTree(fp.read())
-            # print(tree.stmtftree())
-            check_tree(tree, cl)
+            # check violations
+            violations[f] = check_tree(tree, cl)
+
+    # TODO: branches result: (no option) print violations, (-f option) print formatted sql
+    for file, v_list in violations.items():
+        for v in v_list:
+            logger.info('{} {}'.format(file, v.get_message()))
 
 
 if __name__ == '__main__':

@@ -66,6 +66,10 @@ class Node:
         self.contents.append(token)
 
     @property
+    def text(self):
+        return ''.join([x.word for x in self.contents])
+
+    @property
     def indent(self):
         """Returns indent size
 

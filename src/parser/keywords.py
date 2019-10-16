@@ -1,5 +1,10 @@
-# BigQuery reserved keywords
-# https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical?hl=ja#reserved-keywords
+"""
+BigQuery reserved keywords
+https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical?hl=ja#reserved-keywords
+
+Some keywords are used legacy-sql and these are replaced other functions in standard-sql
+ref) # https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-from-legacy-sql#function_comparison
+"""
 RESERVED_KEYWORDS = [
     'ALL', 'AND', 'ANY', 'ARRAY', 'AS', 'ASC', 'ASSERT_ROWS_MODIFIED',
     'AT', 'BETWEEN', 'BY', 'CASE', 'CAST', 'COLLATE', 'CONTAINS', 'CREATE',
@@ -7,7 +12,7 @@ RESERVED_KEYWORDS = [
     'ELSE', 'END', 'ENUM', 'ESCAPE', 'EXCEPT', 'EXCLUDE', 'EXISTS',
     'EXTRACT', 'FALSE', 'FETCH', 'FOLLOWING', 'FOR', 'FROM', 'FULL', 'GROUP',
     'GROUPING', 'GROUPS', 'HASH', 'HAVING', 'IF', 'IGNORE', 'IN', 'INNER',
-    'INTERSECT', 'INTERVAL', 'INTO', 'IN', 'IS', 'JOIN', 'LATERAL', 'LEFT',
+    'INTERSECT', 'INTERVAL', 'INTO', 'IS', 'JOIN', 'LATERAL', 'LEFT',
     'LIKE', 'LIMIT', 'LOOKUP', 'MERGE', 'NATURAL', 'NEW', 'NO', 'NOT',
     'NULL', 'NULLS', 'OF', 'ON', 'OR', 'ORDER', 'OUTER', 'OVER', 'PARTITION',
     'PRECEDING', 'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT', 'RIGHT', 'ROLLUP',
@@ -17,7 +22,7 @@ RESERVED_KEYWORDS = [
 ]
 
 # BigQuery standard-sql functions
-# https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators?hl=ja
+# https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators
 RESERVED_FUNCTIONS = [
     # aggregate-functions
     'ANY_VALUE', 'ARRAY_AGG', 'ARRAY_CONCAT_AGG', 'AVG', 'BIT_AND', 'BIT_OR', 'BIT_XOR',
@@ -75,4 +80,52 @@ RESERVED_FUNCTIONS = [
 BINARY_OPERATORS_ESCAPED = [
     '=', '<', '>', '!',
     r'\+', r'\-', r'\*', '/', '%',
+]
+
+# TODO: organizes keywords to check list.
+EXCLUDED_CHECK_BREAK_LINE = [
+    # SELECT expression.*
+    'ALL', 'DISTINCT', 'EXCEPT', 'REPLACE',
+    # [AT TIME ZONE tz_spec]
+    # https://cloud.google.com/bigquery/docs/reference/standard-sql/timestamp_functions?hl=ja#extract
+    'AT', 'ARRAY', 'CONTAINS',
+    # cross aggregation
+    'CUBE', 'ROLLUP',
+    # FYI) About OVER: https://ichiroku11.hatenablog.jp/entry/2017/04/19/225831
+    'ROWS', 'OVER', 'PRECEDING', 'UNBOUNDED', 'FOLLOWING', 'PARTITION',
+    'CASE', 'USING',
+    # Unorganized
+    'UNNEST', 'UNION',
+    'ANY', 'ASSERT_ROWS_MODIFIED', 'COLLATE',
+    'CREATE', 'CURRENT', 'DEFAULT', 'DEFINE',
+    'END', 'ENUM', 'ESCAPE', 'EXCLUDE', 'EXISTS',
+    'EXTRACT', 'FALSE', 'FETCH',  'FOR',
+    'FULL', 'GROUPING', 'GROUPS', 'HASH', 'IGNORE',
+    'INTERSECT',  'INTO', 'IS',
+    'LATERAL', 'LOOKUP', 'MERGE', 'NATURAL', 'NEW', 'NO',
+    'NULL', 'NULLS', 'OF',
+    'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT',
+    'SET', 'SOME', 'STRUCT', 'TABLESAMPLE', 'TO',
+    'TREAT', 'TRUE',
+    'WINDOW', 'WITHIN'
+]
+
+# Checks whether line is broken after following keyword.
+KEYWORDS_BREAK_LINE_AFTER = [
+    'SELECT', 'FROM', 'WHERE', 'HAVING',  # GROUP BY, ORDER BY
+]
+
+# Checks whether line is broken before following keyword.
+KEYWORDS_BREAK_LINE_BEFORE = [
+    'ASC', 'DESC',
+]
+
+# TODO: checks whether line is not broken before or after following keyword.
+KEYWORDS_NOT_BREAK_LINE = [
+    'WITH', 'AS', 'NOT', 'BY',
+    'INNER', 'CROSS', 'LEFT', 'RIGHT', 'OUTER', 'JOIN', 'ON',
+    'BETWEEN', 'AND', 'OR', 'GROUP', 'CAST', 'ORDER', 'IF', 'ELSE',
+    'INTERVAL',
+    'WHEN', 'THEN',
+    'LIKE', 'IN', 'LIMIT',
 ]

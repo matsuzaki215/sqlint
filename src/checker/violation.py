@@ -9,13 +9,13 @@ class Code(Enum):
     # E1: Indentation
     INDENT_STEPS = ('E101', 'indent steps must be {expected} multiples, but {actual} spaces')
     # E2: Whitespaces
-    MULTIPLE_SPACE = ('E201', 'too many whitespaces')
+    WHITESPACE_MULTIPLE = ('E201', 'there are multiple whitespaces')
     WHITESPACE_AFTER_COMMA = ('E202', 'whitespace must be after comma: {target}')
     WHITESPACE_BEFORE_COMMA = ('E203', 'whitespace must not be before comma: ,')
     WHITESPACE_AFTER_BRACKET = ('E204', 'whitespace must not be after bracket: {target}')
     WHITESPACE_BEFORE_BRACKET = ('E205', 'whitespace must not be before bracket: {target}')
     WHITESPACE_AFTER_OPERATOR = ('E206', 'whitespace must be after binary operator: {target}')
-    WHITESPACE_BEFORE_OPERATOR = ('E207', 'whitespace must be after binary operator: {target}')
+    WHITESPACE_BEFORE_OPERATOR = ('E207', 'whitespace must be before binary operator: {target}')
     # E3: Comma
     COMMA_HEAD = ('E301', 'comma must be head of line')
     COMMA_END = ('E302', 'comma must be end of line')
@@ -26,8 +26,11 @@ class Code(Enum):
     # E5: Join Context
     JOIN_TABLE = ('E501', 'table_name must be at the same line as join context')
     JOIN_CONTEXT = ('E502', 'join context must be fully: {actual} -> {expected}')
-    # E6: Brake line
-    BREAK_LINE = ('E606', 'expected to break a line before \'and\', \'or\', \'on\'')
+    # E6: lines
+    LINE_MULTIPLE_BlANK = ('E601', 'there are multiple blank lines')
+    LINE_ONLY_WHITESPACE = ('E602', 'this line has only whitespace')
+    LINE_BREAK_BEFORE = ('E603', 'expected to break line after: {target}')
+    LINE_BREAK_AFTER = ('E604', 'expected to break line after: {target}')
 
     def __init__(self, code: str, template: str):
         """
@@ -56,8 +59,8 @@ class Code(Enum):
 
 
 class Violation:
-    def __init__(self, node: Node, code: Code, **kwargs):
-        self.node: Node = node
+    def __init__(self, line: int, code: Code, **kwargs):
+        self.line: Node = line
         self.code: Code = code
         self.params: Dict = kwargs
 
@@ -66,7 +69,7 @@ class Violation:
         self.params['pos'] = self.node.get_position(self.params['index'])
 
         return _template.format(
-            line=self.node.line_num,
+            line=self.line,
             **self.params)
 
 
@@ -108,7 +111,7 @@ class CommaPositionViolation(Violation):
 
 class MultiSpacesViolation(Violation):
     def __init__(self, node: Node, **kwargs):
-        super().__init__(node, Code.MULTIPLE_SPACE, **kwargs)
+        super().__init__(node, Code.WHITESPACE_MULTIPLE, **kwargs)
 
 
 class WhitespaceViolation(Violation):
@@ -147,3 +150,25 @@ class JoinTableViolation(Violation):
 class JoinContextViolation(Violation):
     def __init__(self, node: Node, **kwargs):
         super().__init__(node, Code.JOIN_CONTEXT, **kwargs)
+
+
+class MultiBlankLineViolation(Violation):
+    def __init__(self, node: Node, **kwargs):
+        super().__init__(node, Code.LINE_BlANK_MULTIPLE, **kwargs)
+
+
+class OnlyWhitespaceViolation(Violation):
+    def __init__(self, node: Node, **kwargs):
+        super().__init__(node, Code.LINE_ONLY_WHITESPACE, **kwargs)
+
+
+class BreakingLineViolation(Violation):
+    def __init__(self, node: Node, position: int, **kwargs):
+        if position == 'before':
+            _code = Code.BREAK_LINE_BEFORE
+        elif position == 'after':
+            _code = Code.BREAK_LINE_AFTER
+        else:
+            raise ValueError('position must be in [before, after]')
+
+        super().__init__(node, _code, **kwargs)

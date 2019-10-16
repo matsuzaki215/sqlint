@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from . import violation
 from .violation import Violation
@@ -11,7 +11,7 @@ from src.config.config_loader import ConfigLoader
 class Checker(metaclass=ABCMeta):
     @staticmethod
     @abstractmethod
-    def check(tree: SyntaxTree, config: ConfigLoader) -> List[str]:
+    def check(tree: SyntaxTree, config: ConfigLoader) -> List[Violation]:
         pass
 
 
@@ -66,7 +66,7 @@ class KeywordStyleChecker(Checker):
                     continue
 
                 word: str = token.word
-                expected: str = KeywordStyleChecker._get_expected(word, keyword_style)
+                expected: str = KeywordStyleChecker.get_expected(word, keyword_style)
                 if word != expected:
                     params = {'index': idx, 'actual': word, 'expected': expected}
                     v = violation.KeywordStyleViolation(leaf, keyword_style, **params)
@@ -78,7 +78,7 @@ class KeywordStyleChecker(Checker):
         return violation_list
 
     @staticmethod
-    def _get_expected(keyword: str, keyword_style: str) -> str:
+    def get_expected(keyword: str, keyword_style: str) -> str:
         expected: str = keyword
 
         if keyword_style == 'lower':
@@ -133,7 +133,7 @@ class CommaChecker(Checker):
             for idx in comma_indexes:
                 # If a comma is in brackets, it is appropriate not to break a line at comma.
                 # So determines that by counting left- and right- brackets at left-right-side.
-                is_open_bracket = 0 < (tokens[0: idx].count(lb) - tokens[0: idx].count(rb))
+                is_open_bracket = 0 < (tokens[0:idx].count(lb) - tokens[0:idx].count(rb))
                 is_close_bracket = 0 < (tokens[idx+1:].count(rb) - tokens[idx+1:].count(lb))
 
                 if not is_open_bracket or not is_close_bracket:
@@ -309,7 +309,7 @@ class JoinChecker(Checker):
         expected_list = {}
         for k, vs in expected_kvs.items():
             expected_list[k] = ' '.join([
-                KeywordStyleChecker._get_expected(v, keyword_style) for v in vs])
+                KeywordStyleChecker.get_expected(v, keyword_style) for v in vs])
 
         result.extend(JoinChecker._check_context(tree.root, expected_list))
 
@@ -323,13 +323,15 @@ class JoinChecker(Checker):
         for leaf in node.leaves:
             for idx, token in enumerate(leaf.contents):
                 # ignores except join
-                if token.kind != Token.KEYWORD or token.word.upper() != 'JOIN':
+                if token.word.upper() != 'JOIN':
                     continue
 
                 # ignores the token next to 'JOIN' is identifier which may be table.
-                if idx < len(leaf.contents)-1 and leaf.contents[idx+1].kind == Token.IDENTIFIER:
+                if idx <= len(leaf.contents)-2 and leaf.contents[idx+2].kind == Token.IDENTIFIER:
                     continue
 
+                # TODO: Checks below
+                # TODO: SubQueries will become violation in the future.
                 """
                 Ignores the token next to 'Join' is 'Select' (maybe SubQuery)
                 Examples:
@@ -344,10 +346,6 @@ class JoinChecker(Checker):
                         Join (Select id From y)
                     ------
                 """
-                # TODO: SubQueries will be violation in the future.
-                if idx < len(leaf.contents)-2 and \
-                        ('SELECT' in [leaf.contents[idx+1].word.upper(), leaf.contents[idx+2].word.upper()]):
-                    continue
 
                 v = violation.JoinTableViolation(leaf, index=idx)
                 violation_list.append(v)
@@ -395,89 +393,60 @@ class JoinChecker(Checker):
         return violation_list
 
 
-def _check_join_context(line_num, pos, tokens, token_index):
-    """
-    valid contexts
-        [left outer join], [inner join] or [cross join]
-    Args:
-        line_num:
-        pos:
-        tokens:
-        token_index:
+class LineChecker(Checker):
+    """Checks violations about lines management.
 
-    Returns:
+    1. Checks whether two or more blank lines exist.
 
-    """
-    token = tokens[token_index]
+    2. Checks whether breaking line after specified keywords.
+    Examples:
+    --- Good ---
+    Select
+        x
+    From
+        y
+    ------------
 
-    if token.word.upper() != 'JOIN':
-        return []
-
-    # concat join contexts
-    join_contexts = [token.word]
-    for tk in reversed(tokens[:token_index]):
-        if tk.kind == Token.WHITESPACE:
-            continue
-
-        if tk.word.upper() in ['INNER', 'OUTER', 'LEFT', 'RIGHT', 'CROSS']:
-            join_contexts.insert(0, tk.word)
-        else:
-            break
-
-    join_context_str = ' '.join(join_contexts)
-
-    if join_context_str.upper() not in ['LEFT OUTER JOIN', 'INNER JOIN', 'CROSS JOIN']:
-        return ['(L{}, {}): {}: {}'.format(line_num, pos, msg.MESSAGE_JOIN_CONTEXT, join_context_str)]
-
-    return []
-
-
-def _check_break_line(line_num, pos, tokens, token_index):
-    """
-    break line at 'and', 'or', 'on' (except between A and B)
-    Args:
-        line_num:
-        pos:
-        tokens:
-        token_index:
-
-    Returns:
-
-    """
-    token = tokens[token_index]
-
-    if token.word.upper() not in ['AND', 'OR', 'ON']:
-        return []
-
-    if _is_first_token(tokens, token_index):
-        return []
-
-    # if AND, search between context
-    if token.word.upper() == 'AND':
-        for tk in reversed(tokens[:token_index]):
-            if tk.word.upper() == 'AND':
-                break
-            if tk.word.upper() == 'BETWEEN':
-                return []
-
-    return ['(L{}, {}): {}: {}'.format(line_num, pos, msg.MESSAGE_BREAK_LINE, token.word)]
-
-
-def _is_first_token(tokens, token_index):
-    """
-    Args:
-        tokens:
-        token_index:
-
-    Returns:
-
+    ---- NG ----
+    Select x From y
+    ------------
     """
 
-    if token_index == 0:
-        return True
+    @staticmethod
+    def check(tree: SyntaxTree, config: ConfigLoader) -> List[Violation]:
+        result: List[Violation] = []
 
-    for token in tokens[:token_index]:
-        if token.kind != Token.WHITESPACE and token.kind != Token.COMMENT:
-            return False
+        # 1. Checks whether two or more blank lines exist.
+        blank_count, v_list = LineChecker._check_blank_line(tree.root, blank_count=0)
+        if blank_count >= 2:
+            v_list
+        result.extend()
 
-    return True
+        # 2. Checks whether breaking line after specified keywords.
+        # TODO: Implement
+
+        return result
+
+    @staticmethod
+    def _check_blank_line(node: Node, blank_count: int) -> Tuple[int, List[Violation]]:
+        violation_list: List[Violation] = []
+
+        count = len(node.contents)
+
+        is_blank = (count == 0)
+
+        if count == 1 and node.contents[0].kind == Token.WHITESPACE:
+            violation_list.append(violation.OnlyWhitespaceViolation(node, index=0))
+            is_blank = True
+
+        # If this line is not blank and 2 or more previous lines are blank, stack violation.
+        if is_blank:
+            blank_count += 1
+        elif blank_count >= 2:
+            violation_list.append(violation.MultiBlankLineViolation(node, index=0))
+
+        for leaf in node.leaves:
+            LineChecker._check_blank_line(tree.root, blank_count=0))
+
+
+        return blank_count, violation_list

@@ -119,7 +119,7 @@ def _tokenize_bilateral(text: str, token: str, ptn: Pattern) -> Tuple[str, List[
     return text, []
 
 
-def _tokenize_keyword(text: str, token: str, ptn: Pattern) -> Tuple[str, List[Token]]:
+def _tokenize_keyword(text: str, ptn: Pattern) -> Tuple[str, List[Token]]:
     """TODO: Describes doc string """
 
     tokens: List[Token] = []
@@ -130,7 +130,7 @@ def _tokenize_keyword(text: str, token: str, ptn: Pattern) -> Tuple[str, List[To
             tokens.append(Token(match.group(1), Token.WHITESPACE))
         tokens.append(Token(match.group(2), Token.KEYWORD))
         if match.group(3) == '(':
-            tokens.append(Token(match.group(3), Token.BRACKET_RIGHT))
+            tokens.append(Token(match.group(3), Token.BRACKET_LEFT))
         elif len(match.group(3)) > 0:
             tokens.append(Token(match.group(3), Token.WHITESPACE))
 
@@ -191,7 +191,7 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
 
         # keywords
         for ptn in pattern.KEYWORDS:
-            text, matches = _tokenize_keyword(text, token=Token.KEYWORD, ptn=ptn)
+            text, matches = _tokenize_keyword(text, ptn=ptn)
             if matches:
                 break
         tokens.extend(matches)
