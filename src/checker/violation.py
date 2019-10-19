@@ -2,6 +2,7 @@ from typing import Dict
 from enum import Enum
 
 from src.parser.token import Token
+from src.parser.syntax_tree import SyntaxTree
 
 
 class Code(Enum):
@@ -58,8 +59,8 @@ class Code(Enum):
 
 
 class Violation:
-    def __init__(self, line: int, pos: int, code: Code, **kwargs):
-        self.line: int = line
+    def __init__(self, tree: SyntaxTree, pos: int, code: Code, **kwargs):
+        self.tree: SyntaxTree = tree
         self.pos: int = pos
         self.code: Code = code
         self.params: Dict = kwargs
@@ -68,18 +69,18 @@ class Violation:
         _template = '(L{line}, {pos}): ' + self.code.template
 
         return _template.format(
-            line=self.line,
+            line=self.tree.node.line_num,
             pos=self.pos,
             **self.params)
 
 
 class IndentStepsViolation(Violation):
-    def __init__(self, line: int, pos: int, **kwargs):
-        super().__init__(line, pos, Code.INDENT_STEPS, **kwargs)
+    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
+        super().__init__(tree, pos, Code.INDENT_STEPS, **kwargs)
 
 
 class KeywordStyleViolation(Violation):
-    def __init__(self, line: int, pos: int, **kwargs):
+    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
         if 'style' not in kwargs:
             raise KeyError(f'style must be passed.')
 
@@ -94,11 +95,11 @@ class KeywordStyleViolation(Violation):
         else:
             raise ValueError('keyword style must be in [upper-all, upper-head, lower]')
 
-        super().__init__(line, pos, _code, **kwargs)
+        super().__init__(tree, pos, _code, **kwargs)
 
 
 class CommaPositionViolation(Violation):
-    def __init__(self, line: int, pos: int, comma_position: str, **kwargs):
+    def __init__(self, tree: SyntaxTree, pos: int, comma_position: str, **kwargs):
         self.comma_position = comma_position
 
         if comma_position == 'head':
@@ -108,16 +109,16 @@ class CommaPositionViolation(Violation):
         else:
             raise ValueError('position must be in [head, end]')
 
-        super().__init__(line, pos, _code, **kwargs)
+        super().__init__(tree, pos, _code, **kwargs)
 
 
 class MultiSpacesViolation(Violation):
-    def __init__(self, line: int, pos: int, **kwargs):
-        super().__init__(line, pos, Code.WHITESPACE_MULTIPLE, **kwargs)
+    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
+        super().__init__(tree, pos, Code.WHITESPACE_MULTIPLE, **kwargs)
 
 
 class WhitespaceViolation(Violation):
-    def __init__(self, line: int, pos: int, **kwargs):
+    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
         if 'token' not in kwargs:
             raise KeyError(f'token must be passed.')
         if 'position' not in kwargs:
@@ -149,31 +150,31 @@ class WhitespaceViolation(Violation):
             raise ValueError('token kind must be in [{}, {}, {}, {}]'.format(
                 Token.COMMA, Token.BRACKET_LEFT, Token.BRACKET_RIGHT, Token.OPERATOR))
 
-        super().__init__(line, pos, _code, **kwargs)
+        super().__init__(tree, pos, _code, **kwargs)
 
 
 class JoinTableViolation(Violation):
-    def __init__(self, line: int, pos: int, **kwargs):
-        super().__init__(line, pos, Code.JOIN_TABLE, **kwargs)
+    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
+        super().__init__(tree, pos, Code.JOIN_TABLE, **kwargs)
 
 
 class JoinContextViolation(Violation):
-    def __init__(self, line: int, pos: int, **kwargs):
-        super().__init__(line, pos, Code.JOIN_CONTEXT, **kwargs)
+    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
+        super().__init__(tree, pos, Code.JOIN_CONTEXT, **kwargs)
 
 
 class MultiBlankLineViolation(Violation):
-    def __init__(self, line: int, pos: int, **kwargs):
-        super().__init__(line, pos, Code.LINE_BlANK_MULTIPLE, **kwargs)
+    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
+        super().__init__(tree, pos, Code.LINE_BlANK_MULTIPLE, **kwargs)
 
 
 class OnlyWhitespaceViolation(Violation):
-    def __init__(self, line: int, pos: int, **kwargs):
-        super().__init__(line, pos, Code.LINE_ONLY_WHITESPACE, **kwargs)
+    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
+        super().__init__(tree, pos, Code.LINE_ONLY_WHITESPACE, **kwargs)
 
 
 class BreakingLineViolation(Violation):
-    def __init__(self, line: int, pos: int, position: int, **kwargs):
+    def __init__(self, tree: SyntaxTree, pos: int, position: int, **kwargs):
         if position == 'before':
             _code = Code.BREAK_LINE_BEFORE
         elif position == 'after':
@@ -181,4 +182,4 @@ class BreakingLineViolation(Violation):
         else:
             raise ValueError('position must be in [before, after]')
 
-        super().__init__(line, pos, _code, **kwargs)
+        super().__init__(tree, pos, _code, **kwargs)
