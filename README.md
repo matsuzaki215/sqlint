@@ -104,14 +104,13 @@ tests/samples/query005.sql (L2, 6): comma must be head of line
 tests/samples/query005.sql (L7, 6): comma must be head of line
 tests/samples/query006.sql (L1, 1): reserved keywords must be lower case: SELECT -> select
 tests/samples/query006.sql (L3, 7): reserved keywords must be lower case: Count -> count
-sqlint/tests/data/query007.sql:(L8, 16): table_name must be at the same line as join context
-sqlint/tests/data/query008.sql:(L6, 5): join context must be [left outer join], [inner join] or [cross join]: join
-sqlint/tests/data/query008.sql:(L10, 10): join context must be [left outer join], [inner join] or [cross join]: left join
-sqlint/tests/data/query008.sql:(L14, 11): join context must be [left outer join], [inner join] or [cross join]: right join
-sqlint/tests/data/query008.sql:(L16, 17): join context must be [left outer join], [inner join] or [cross join]: right outer join
-sqlint/tests/data/query009.sql:(L6, 0): too many blank lines (2)
-sqlint/tests/data/query009.sql:(L10, 0): too many blank lines (2)
-sqlint/tests/data/query010.sql:(L6, 35): break line at 'and', 'or', 'on': on
-sqlint/tests/data/query010.sql:(L11, 29): break line at 'and', 'or', 'on': and
-sqlint/tests/data/query010.sql:(L12, 14): break line at 'and', 'or', 'on': or
+tests/samples/query007.sql (L8, 16): table_name must be at the same line as join context
+tests/samples/query008.sql (L6, 5): join context must be fully: join -> inner join
+tests/samples/query008.sql (L10, 10): join context must be fully: left join -> left outer join
+tests/samples/query008.sql (L14, 11): join context must be fully: right join -> right outer join
+tests/samples/query009.sql (L6, 1): there are multiple blank lines
+tests/samples/query009.sql (L9, 1): there are multiple blank lines
+tests/samples/query013.sql (L3, 5): whitespace must be after comma: ,b
+tests/samples/query013.sql (L7, 13): whitespace must not be before comma: ,
+tests/samples/query013.sql (L7, 13): whitespace must be after comma: ,2
 ```
