@@ -2,8 +2,8 @@ import re
 from sre_parse import Pattern
 from typing import List, Tuple
 
-from .token import Token
 from . import pattern
+from .token import Token
 
 
 def parse(stmt: str) -> List[List[Token]]:

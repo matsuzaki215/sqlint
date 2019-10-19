@@ -1,7 +1,7 @@
 import logging
 from typing import List, Optional
 
-from .token import Token
+from .parser import Token
 from .parser import parse as parse_sql
 
 logger = logging.getLogger(__name__)
@@ -57,6 +57,9 @@ class Node:
 
     def __len__(self):
         return len(self.tokens)
+
+    def __str__(self):
+        return ' '.join([str(tkn) for tkn in self.tokens])
 
     def get_position(self, index: int):
         """Returns length of texts before Nth token.
@@ -258,9 +261,7 @@ class SyntaxTree:
         result = ''
 
         for leaf in tree.leaves:
-            # TODO: get default indent from config file
-            indent = '    '
-            text = f'{indent * (leaf.depth - 1)}{leaf.text.lstrip()}'
+            text = leaf.text
 
             if len(result) == 0:
                 result = text

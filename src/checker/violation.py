@@ -1,8 +1,8 @@
 from typing import Dict
 from enum import Enum
 
-from src.parser.token import Token
-from src.parser.syntax_tree import SyntaxTree
+from src.parser import Token
+from src.syntax_tree import SyntaxTree
 
 
 class Code(Enum):
