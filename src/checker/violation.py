@@ -1,7 +1,6 @@
 from typing import Dict
 from enum import Enum
 
-from src.parser.syntax_tree import Node
 from src.parser.token import Token
 
 
@@ -27,7 +26,7 @@ class Code(Enum):
     JOIN_TABLE = ('E501', 'table_name must be at the same line as join context')
     JOIN_CONTEXT = ('E502', 'join context must be fully: {actual} -> {expected}')
     # E6: lines
-    LINE_MULTIPLE_BlANK = ('E601', 'there are multiple blank lines')
+    LINE_BlANK_MULTIPLE = ('E601', 'there are multiple blank lines')
     LINE_ONLY_WHITESPACE = ('E602', 'this line has only whitespace')
     LINE_BREAK_BEFORE = ('E603', 'expected to break line after: {target}')
     LINE_BREAK_AFTER = ('E604', 'expected to break line after: {target}')
@@ -59,29 +58,32 @@ class Code(Enum):
 
 
 class Violation:
-    def __init__(self, line: int, code: Code, **kwargs):
-        self.line: Node = line
+    def __init__(self, line: int, pos: int, code: Code, **kwargs):
+        self.line: int = line
+        self.pos: int = pos
         self.code: Code = code
         self.params: Dict = kwargs
 
     def get_message(self):
         _template = '(L{line}, {pos}): ' + self.code.template
-        self.params['pos'] = self.node.get_position(self.params['index'])
 
         return _template.format(
             line=self.line,
+            pos=self.pos,
             **self.params)
 
 
 class IndentStepsViolation(Violation):
-    def __init__(self, node: Node, **kwargs):
-        super().__init__(node, Code.INDENT_STEPS, **kwargs)
-        self.params['index'] = 0
+    def __init__(self, line: int, pos: int, **kwargs):
+        super().__init__(line, pos, Code.INDENT_STEPS, **kwargs)
 
 
 class KeywordStyleViolation(Violation):
-    def __init__(self, node: Node, style: str, **kwargs):
-        self.style = style
+    def __init__(self, line: int, pos: int, **kwargs):
+        if 'style' not in kwargs:
+            raise KeyError(f'style must be passed.')
+
+        style = kwargs['style']
 
         if style == 'upper-all':
             _code = Code.KEYWORD_UPPER
@@ -92,11 +94,11 @@ class KeywordStyleViolation(Violation):
         else:
             raise ValueError('keyword style must be in [upper-all, upper-head, lower]')
 
-        super().__init__(node, _code, **kwargs)
+        super().__init__(line, pos, _code, **kwargs)
 
 
 class CommaPositionViolation(Violation):
-    def __init__(self, node: Node, comma_position: str, **kwargs):
+    def __init__(self, line: int, pos: int, comma_position: str, **kwargs):
         self.comma_position = comma_position
 
         if comma_position == 'head':
@@ -106,16 +108,24 @@ class CommaPositionViolation(Violation):
         else:
             raise ValueError('position must be in [head, end]')
 
-        super().__init__(node, _code, **kwargs)
+        super().__init__(line, pos, _code, **kwargs)
 
 
 class MultiSpacesViolation(Violation):
-    def __init__(self, node: Node, **kwargs):
-        super().__init__(node, Code.WHITESPACE_MULTIPLE, **kwargs)
+    def __init__(self, line: int, pos: int, **kwargs):
+        super().__init__(line, pos, Code.WHITESPACE_MULTIPLE, **kwargs)
 
 
 class WhitespaceViolation(Violation):
-    def __init__(self, node: Node, token: str, position: str, **kwargs):
+    def __init__(self, line: int, pos: int, **kwargs):
+        if 'token' not in kwargs:
+            raise KeyError(f'token must be passed.')
+        if 'position' not in kwargs:
+            raise KeyError(f'position must be passed.')
+
+        token = kwargs['token']
+        position = kwargs['position']
+
         # TODO: modify more simple, maybe it is better to split several classes.
         if token == Token.COMMA:
             if position == 'before':
@@ -139,31 +149,31 @@ class WhitespaceViolation(Violation):
             raise ValueError('token kind must be in [{}, {}, {}, {}]'.format(
                 Token.COMMA, Token.BRACKET_LEFT, Token.BRACKET_RIGHT, Token.OPERATOR))
 
-        super().__init__(node, _code, **kwargs)
+        super().__init__(line, pos, _code, **kwargs)
 
 
 class JoinTableViolation(Violation):
-    def __init__(self, node: Node, **kwargs):
-        super().__init__(node, Code.JOIN_TABLE, **kwargs)
+    def __init__(self, line: int, pos: int, **kwargs):
+        super().__init__(line, pos, Code.JOIN_TABLE, **kwargs)
 
 
 class JoinContextViolation(Violation):
-    def __init__(self, node: Node, **kwargs):
-        super().__init__(node, Code.JOIN_CONTEXT, **kwargs)
+    def __init__(self, line: int, pos: int, **kwargs):
+        super().__init__(line, pos, Code.JOIN_CONTEXT, **kwargs)
 
 
 class MultiBlankLineViolation(Violation):
-    def __init__(self, node: Node, **kwargs):
-        super().__init__(node, Code.LINE_BlANK_MULTIPLE, **kwargs)
+    def __init__(self, line: int, pos: int, **kwargs):
+        super().__init__(line, pos, Code.LINE_BlANK_MULTIPLE, **kwargs)
 
 
 class OnlyWhitespaceViolation(Violation):
-    def __init__(self, node: Node, **kwargs):
-        super().__init__(node, Code.LINE_ONLY_WHITESPACE, **kwargs)
+    def __init__(self, line: int, pos: int, **kwargs):
+        super().__init__(line, pos, Code.LINE_ONLY_WHITESPACE, **kwargs)
 
 
 class BreakingLineViolation(Violation):
-    def __init__(self, node: Node, position: int, **kwargs):
+    def __init__(self, line: int, pos: int, position: int, **kwargs):
         if position == 'before':
             _code = Code.BREAK_LINE_BEFORE
         elif position == 'after':
@@ -171,4 +181,4 @@ class BreakingLineViolation(Violation):
         else:
             raise ValueError('position must be in [before, after]')
 
-        super().__init__(node, _code, **kwargs)
+        super().__init__(line, pos, _code, **kwargs)

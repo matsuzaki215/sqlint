@@ -29,7 +29,7 @@ setup(
     name='src',
     version=version,
     license="MIT",
-    author='shigeru',
+    author='shigeru0215',
     author_email='matsuzaki215@gmail.com',
     url='https://github.com/shigeru0215/sqlint',
     description='Simple Sql Linter',

@@ -57,7 +57,8 @@ def main(files, config):
 
         with open(f, 'r') as fp:
             # constructs syntax tree
-            tree = SyntaxTree(fp.read())
+            tree = SyntaxTree.stmtptree(fp.read())
+            # print(tree.stmtftree())
             # check violations
             violations[f] = check_tree(tree, cl)
 
