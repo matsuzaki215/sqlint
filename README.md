@@ -53,36 +53,35 @@ Dockerfile
 $ docker build -t sqlint:latest .
  ...
 $ docker run -it sqlint:latset /bin/bash
-xxxxx:/work # python3 -m sqlint sqlint/tests/data/query001.sql 
-sqlint/tests/data/query001.sql:(L2, 6): comma must be head of line
-sqlint/tests/data/query001.sql:(L7, 6): comma must be head of line
+xxxxx:/work # python3 -m sqlint sqlint/tests/data/query005.sql 
+sqlint/tests/data/query005.sql:(L2, 6): comma must be head of line
+sqlint/tests/data/query005.sql:(L7, 6): comma must be head of line
 ```
 
 ## Checking variations
 
-check all following variations in default
+Check if sql statement violates following rules.
 
-- indent steps are N multiples.(default: N = 4)
+- indent steps are N multiples (default: N = 4).
 
-- duplicated spaces.
+- duplicated whitespaces except indent.
 
 - duplicated blank lines.
 
-- reserved keywords is capital or not (default: not capital).
+- reserved keywords is capital case or not (default: not capital).
 
-- comma is head(end) of the line which connect some columns or conditions. (default: head)
+- comma is head(or end) of the line which connects some columns or conditions (default: head).
 
+- a whitespace are not before `)` or after `(`.
 
-- white-spaces are not before ) or after (
+- a whitespace is before and after binary operators.
+  - (e.g.) `=`, `<`, `>`, `<=`. `>=`. `<>`, `!=`, `+`, `-`, `*`, `/`, `%`
 
-- a whitespace is before and after binary operators
-  - (e.g.) =, <, >, <=. >=. <>, !=, +, -, *, /, %
+- the table name is at the same line as join context.
 
-- the table name is at the same line as join context
+- join contexts are written fully, for example `left outer join, `inner join or `cross join`.
 
-- join context is [left outer join], [inner join] or [cross join]
-
-- indent before 'on', 'or', 'and' (except between a and b)
+- whether new line starts at 'on', 'or', 'and' context (except `between`).
 
 ## Futures
 - table_name alias doesn't equal reserved functions
@@ -94,25 +93,24 @@ check all following variations in default
 ## Sample
 
 ```
-$ sqlint sqlint/tests/data/*
-sqlint/tests/data/query001.sql:(L2, 6): comma must be head of line
-sqlint/tests/data/query001.sql:(L7, 6): comma must be head of line
-sqlint/tests/data/query002.sql:(L1, 1): reserved keywords must be lower case: SELECT -> select
-sqlint/tests/data/query002.sql:(L3, 7): reserved keywords must be lower case: COUNT -> count
-sqlint/tests/data/query003.sql:(L2, 1): indent steps must be 4 multiples (5)
-sqlint/tests/data/query004.sql:(L5, 18): too many spaces
-sqlint/tests/data/query005.sql:(L2, 7): whitespace must not be after bracket: (
-sqlint/tests/data/query005.sql:(L2, 22): whitespace must not be before bracket: )
-sqlint/tests/data/query006.sql:(L3, 8): whitespace must be after binary operator: +c
-sqlint/tests/data/query006.sql:(L3, 8): whitespace must be after binary operator: b+
-sqlint/tests/data/query007.sql:(L8, 16): table_name must be at the same line as join context
-sqlint/tests/data/query008.sql:(L6, 5): join context must be [left outer join], [inner join] or [cross join]: join
-sqlint/tests/data/query008.sql:(L10, 10): join context must be [left outer join], [inner join] or [cross join]: left join
-sqlint/tests/data/query008.sql:(L14, 11): join context must be [left outer join], [inner join] or [cross join]: right join
-sqlint/tests/data/query008.sql:(L16, 17): join context must be [left outer join], [inner join] or [cross join]: right outer join
-sqlint/tests/data/query009.sql:(L6, 0): too many blank lines (2)
-sqlint/tests/data/query009.sql:(L10, 0): too many blank lines (2)
-sqlint/tests/data/query010.sql:(L6, 35): break line at 'and', 'or', 'on': on
-sqlint/tests/data/query010.sql:(L11, 29): break line at 'and', 'or', 'on': and
-sqlint/tests/data/query010.sql:(L12, 14): break line at 'and', 'or', 'on': or
+$ sqlint sqlint/tests/samples/*
+tests/samples/query001.sql (L2, 1): indent steps must be 4 multiples, but 5 spaces
+tests/samples/query002.sql (L6, 16): there are multiple whitespaces
+tests/samples/query003.sql (L2, 7): whitespace must not be after bracket: ( 
+tests/samples/query003.sql (L2, 22): whitespace must not be before bracket:  )
+tests/samples/query004.sql (L3, 8): whitespace must be before binary operator: b+
+tests/samples/query004.sql (L3, 8): whitespace must be after binary operator: +c
+tests/samples/query005.sql (L2, 6): comma must be head of line
+tests/samples/query005.sql (L7, 6): comma must be head of line
+tests/samples/query006.sql (L1, 1): reserved keywords must be lower case: SELECT -> select
+tests/samples/query006.sql (L3, 7): reserved keywords must be lower case: Count -> count
+tests/samples/query007.sql (L8, 16): table_name must be at the same line as join context
+tests/samples/query008.sql (L6, 5): join context must be fully: join -> inner join
+tests/samples/query008.sql (L10, 10): join context must be fully: left join -> left outer join
+tests/samples/query008.sql (L14, 11): join context must be fully: right join -> right outer join
+tests/samples/query009.sql (L6, 1): there are multiple blank lines
+tests/samples/query009.sql (L9, 1): there are multiple blank lines
+tests/samples/query013.sql (L3, 5): whitespace must be after comma: ,b
+tests/samples/query013.sql (L7, 13): whitespace must not be before comma: ,
+tests/samples/query013.sql (L7, 13): whitespace must be after comma: ,2
 ```

@@ -1,26 +1,23 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import re
 
-from sqlint.parser.config import (
+from .keywords import (
     RESERVED_KEYWORDS,
     RESERVED_FUNCTIONS,
     BINARY_OPERATORS_ESCAPED,
 )
 
 # regex patterns
-REGEX_COMMA = '(\s*)(,)(\s*)'
-REGEX_BRACKET_LEFT = '(\s*)(\()(\s*)'
-REGEX_BRACKET_RIGHT = '(\s*)(\))(\s*)'
-REGEX_KEYWORD = '(\s*)({})(\(|\s+|$)'
-REGEX_OPERATOR = '(\s*)([{}]+)(\s*)'
-REGEX_COMMENT_SINGLE = '(\s*)(#.*|--.*)'
-REGEX_COMMENT_BEGIN = '(\s*)(/\*)'
-REGEX_COMMENT_END = '(.*?)(\*/)'
-REGEX_QUOTES = '(\s*)("\S*"|\'\S*\'|`\S*`)(\s*)'
-REGEX_IDENTIFIER = '(\s*)([^,\(\){}#\s]+)(\s*)'
-REGEX_WHITESPACE = '(\s*)'
+REGEX_COMMA = r'(\s*)(,)(\s*)'
+REGEX_BRACKET_LEFT = r'(\s*)(\()(\s*)'
+REGEX_BRACKET_RIGHT = r'(\s*)(\))(\s*)'
+REGEX_KEYWORD = r'(\s*)({})(\(|\s+|$)'
+REGEX_OPERATOR = r'(\s*)([{}]+)(\s*)'
+REGEX_COMMENT_SINGLE = r'(\s*)(#.*|--.*)'
+REGEX_COMMENT_BEGIN = r'(\s*)(/\*)'
+REGEX_COMMENT_END = r'(.*?)(\*/)'
+REGEX_QUOTES = r'(\s*)("\S*"|\'\S*\'|`\S*`)(\s*)'
+REGEX_IDENTIFIER = r'(\s*)([^,\(\){}#\s]+)(\s*)'
+REGEX_WHITESPACE = r'(\s*)'
 
 # temporary variable
 binary_operators = ''.join(BINARY_OPERATORS_ESCAPED)

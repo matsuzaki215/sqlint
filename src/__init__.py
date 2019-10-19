@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
-
-from sqlint import sqlint
-
 __version__ = '0.1.2'
 
-__all__ = [
-    'sqlint'
-]
 
-
+'''
 def parse(stmt):
     """
 
@@ -16,7 +9,7 @@ def parse(stmt):
     :return:
     """
 
-    return sqlint.parse(stmt)
+    return api.parse(stmt)
 
 
 def check(stmt):
@@ -26,4 +19,5 @@ def check(stmt):
     :return:
     """
 
-    return sqlint.check(stmt)
+    return api.check(stmt)
+'''
