@@ -144,7 +144,7 @@ class KeywordGrouper(Grouper):
             (['GROUP'], cls._group_group),
             (['HAVING'], cls._group_having),
             (['CASE'], cls._group_case),
-            (['WHEN'], cls._group_where),
+            (['WHEN'], cls._group_when),
             (['INNER', 'LEFT', 'RIGHT', 'CROSS', 'OUTER', 'JOIN'], cls._group_join),
             (['ON', 'USING'], cls._group_joinkey),
         ]

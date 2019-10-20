@@ -77,18 +77,41 @@ class IndentStepsFormatter(Formatter):
 
             if tokens[0].kind == Token.WHITESPACE:
                 leaf.tokens[0].word = indent*(leaf.depth-1)
-            else:
+            elif leaf.depth > 1:
                 leaf.node.insert(0, Token(word=indent*(leaf.depth-1), kind=Token.WHITESPACE))
 
             cls._format(leaf, indent_steps)
 
 
 class WhiteSpacesFormatter(Formatter):
-    def format(self, leaf: SyntaxTree, config: Config):
+    @classmethod
+    def format(cls, tree: SyntaxTree, config: Config):
+        cls._format(tree)
+
+    @classmethod
+    def _format(cls, tree: SyntaxTree):
         # ignores head of tokens because it is indent
-        for token in leaf.tokens[1:]:
-            if token.kind == Token.WHITESPACE:
-                token.word = ' '
+        for leaf in tree.leaves:
+            for idx, token in enumerate(leaf.tokens):
+                # next of ( must not be WHITESPACE
+                if token.kind in [Token.BRACKET_LEFT, Token.WHITESPACE]:
+                    continue
+
+                if idx >= len(leaf.tokens)-1:
+                    continue
+
+                next_tokens = leaf.tokens[idx+1]
+                # previoues of comma or ) must not be WHITESPACE
+                # user function maybe
+                if (next_tokens.kind in [Token.COMMA, Token.BRACKET_RIGHT]) or \
+                   (token.kind == Token.IDENTIFIER and next_tokens.kind == Token.BRACKET_LEFT):
+                    continue
+
+                whitespace = '  ' if next_tokens.kind == Token.COMMENT else ' '
+
+                leaf.node.insert(idx+1, Token(word=whitespace, kind=Token.WHITESPACE))
+
+            cls._format(leaf)
 
 
 # TODO: keep Idempotency
@@ -106,10 +129,11 @@ class BlankLineFormatter(Formatter):
         if tree.depth != 0:
             return
 
-        lb_token = Token(word='(', kind=Token.BRACKET_LEFT)
+        rb_token = Token(word=')', kind=Token.BRACKET_RIGHT)
         with_token = Token(word='WITH', kind=Token.KEYWORD)
         comma_token = Token(word=',', kind=Token.COMMA)
         index = 0
+
         while True:
             # if reaches to end of leaves
             if len(tree.leaves) <= index:
@@ -119,7 +143,7 @@ class BlankLineFormatter(Formatter):
             tokens = leaf.tokens
 
             try:
-                if (tokens[0] == lb_token) or \
+                if (tokens[0] == rb_token) or \
                    (tokens[0].kind == Token.IDENTIFIER) or \
                    (tokens[0] in [with_token, comma_token] and len(tokens) == 2):
                     tree.insert_leaf(index+1, SyntaxTree(depth=1, line_num=0))  # line num will be re-Numbered

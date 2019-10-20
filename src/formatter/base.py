@@ -63,14 +63,13 @@ def _gather_tokens(tree: SyntaxTree) -> List[Token]:
 def _reshape_tree(tree: SyntaxTree):
     parent, children, sibling = _split_tokens(tree)
 
-    """
-    if len(parent) and parent[0].word.upper() == 'ON':
+    if len(parent) and parent[0].word.lower() == 'when':
         print('-'*10)
         print(f'parent = {parent}')
         print(f'children = {children}')
         print(f'sibling = {sibling}')
         print('-'*10)
-    """
+
     tree.tokens = parent
 
     if children:
@@ -135,7 +134,7 @@ def _format_tree(tree: SyntaxTree, config: Config):
         fmt.CommaPositionFormatter,
         fmt.IndentStepsFormatter,
         fmt.BlankLineFormatter,
-        # fmt.WhiteSpacesFormatter,
+        fmt.WhiteSpacesFormatter,
     ]
 
     for formatter in formatter_list:
