@@ -1,10 +1,14 @@
 import os
+import warnings
 from typing import Optional
 from configparser import (
     ConfigParser,
     NoSectionError,
     NoOptionError
 )
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_INI = os.path.join(BASE_DIR, 'default.ini')
 
 # section name in ini file
 SECTION = 'sqlint'
@@ -16,11 +20,8 @@ NAME_TYPES = {
   'indent-steps': int  # indent steps in breaking a line
 }
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_INI = os.path.join(BASE_DIR, 'default.ini')
 
-
-class ConfigLoader(object):
+class ConfigLoader:
     def __init__(self, config_file: Optional[str] = DEFAULT_INI):
         self.values = {}
 
@@ -94,3 +95,38 @@ class ConfigLoader(object):
             return self.values[name]
 
         return default
+
+
+class Config:
+    def __init__(self, config_file: Optional[str] = DEFAULT_INI):
+        self.loader: ConfigLoader = ConfigLoader(config_file)
+
+    @property
+    def comma_position(self) -> str:
+        result = self.loader.get('comma-position')
+        if result not in ['head', 'end']:
+            warnings.warn(f'comma-position value must be "head" or "end", but {result}'
+                          f' So defualt value(before) was used.')
+            return 'head'
+
+        return result
+
+    @property
+    def keyword_style(self) -> str:
+        result = self.loader.get('keyword-style')
+        if result not in ['upper', 'lower', 'upper-head']:
+            warnings.warn(f'keyword-style value must be "upper", "lower" or "upper-head", but {result}.'
+                          f' So defualt value(lower) was used.')
+            return 'lower'
+
+        return result
+
+    @property
+    def indent_steps(self) -> int:
+        result = self.loader.get('indent-steps')
+        if result < 0:
+            warnings.warn(f'indent-steps value must be more 0, but {result}'
+                          f' So defualt value(4) was used.')
+            return 4
+
+        return self.loader.get('indent-steps')

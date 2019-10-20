@@ -3,10 +3,10 @@ from typing import List
 from . import checker as chk
 from .violation import Violation
 from src.syntax_tree import SyntaxTree
-from src.config import ConfigLoader
+from src.config import Config
 
 
-def check(tree: SyntaxTree, config: ConfigLoader) -> List[Violation]:
+def check(tree: SyntaxTree, config: Config) -> List[Violation]:
     """Checks syntax tree and returns error messages
 
     Args:

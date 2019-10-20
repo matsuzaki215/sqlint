@@ -76,6 +76,12 @@ RESERVED_FUNCTIONS = [
     # TODO: Not Supported.
     # net-functions
 ]
+# BigQuery standard-sql user functions
+# https://cloud.google.com/bigquery/docs/reference/standard-sql/user-defined-functions
+RESERVED_USER_FUNCTIONS = [
+    'TEMP', 'TEMPORARY', 'RETURNS', 'LANGUAGE'
+]
+
 
 BINARY_OPERATORS_ESCAPED = [
     '=', '<', '>', '!',
@@ -112,7 +118,7 @@ EXCLUDED_CHECK_BREAK_LINE = [
 
 # Checks whether line is broken after following keyword.
 KEYWORDS_BREAK_LINE_AFTER = [
-    'SELECT', 'FROM', 'WHERE', 'HAVING',  # GROUP BY, ORDER BY
+    'SELECT', 'FROM', 'WHERE', 'HAVING', 'BY',  # GROUP BY, ORDER BY
 ]
 
 # Checks whether line is broken before following keyword.
@@ -129,3 +135,25 @@ KEYWORDS_NOT_BREAK_LINE = [
     'WHEN', 'THEN',
     'LIKE', 'IN', 'LIMIT',
 ]
+
+
+def format(keyword: str, keyword_style: str) -> str:
+    """Returns formatted keyword
+
+    Args:
+        keyword: target keyword
+        keyword_style: formatting style
+
+    Returns:
+        formatted keyword
+    """
+    expected: str = keyword
+
+    if keyword_style == 'lower':
+        expected = keyword.lower()
+    if keyword_style == 'upper-all':
+        expected = keyword.upper()
+    if keyword_style == 'upper-head':
+        expected = f'{keyword[0].upper()}{keyword[1:].lower()}'
+
+    return expected

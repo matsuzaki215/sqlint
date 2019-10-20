@@ -31,6 +31,6 @@ class Token:
         if isinstance(other, str):
             return self.word == str(other)
         if isinstance(other, Token):
-            return self.word == other.word and self.kind == other.kind
+            return self.word.upper() == other.word.upper() and self.kind == other.kind
 
         return False

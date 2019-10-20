@@ -1,6 +1,5 @@
-from .config_loader import ConfigLoader, DEFAULT_INI
+from .config_loader import Config
 
 __all__ = [
-    'ConfigLoader',
-    'DEFAULT_INI'
+    'Config',
 ]

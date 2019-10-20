@@ -69,7 +69,7 @@ def _tokenize_comment_end(text: str) -> Tuple[str, List[Token], bool]:
     return '', [Token(text, Token.COMMENT)], True
 
 
-def _tokenize_comment_begin(text: str) -> Tuple[str, List[Token], bool]:
+def _tokenize_comment_begin(text: str) -> Tuple[str, List[Token]]:
     """TODO: Describes doc string """
 
     tokens: List[Token] = []
@@ -80,9 +80,9 @@ def _tokenize_comment_begin(text: str) -> Tuple[str, List[Token], bool]:
             tokens.append(Token(match.group(1), Token.WHITESPACE))
         tokens.append(Token(match.group(2), Token.COMMENT))
 
-        return text[match.end():], tokens, True
+        return text[match.end():], tokens
 
-    return text, [], False
+    return text, []
 
 
 def _tokenize_comment_single(text: str) -> Tuple[str, List[Token]]:
@@ -140,7 +140,7 @@ def _tokenize_keyword(text: str, ptn: Pattern) -> Tuple[str, List[Token]]:
 
 
 def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bool]:
-    """Tokenizes one line sql statement to some tokens.
+    """Tokenizes one line of sql statement to some tokens.
 
     Args:
         text: sql statement
@@ -160,9 +160,10 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
             continue
 
         # comment begin (/*)
-        text, matches, is_comment_line = _tokenize_comment_begin(text)
+        text, matches = _tokenize_comment_begin(text)
         tokens.extend(matches)
         if matches:
+            is_comment_line = True
             continue
 
         # comment single(#, --)
@@ -190,10 +191,7 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
             continue
 
         # keywords
-        for ptn in pattern.KEYWORDS:
-            text, matches = _tokenize_keyword(text, ptn=ptn)
-            if matches:
-                break
+        text, matches = _tokenize_keyword(text, ptn=pattern.KEYWORDS)
         tokens.extend(matches)
         if matches:
             continue

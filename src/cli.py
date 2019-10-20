@@ -1,14 +1,10 @@
 import click
 import logging
 import os
-from typing import Dict, List
+from typing import Dict
 
 from .checker import check as check_tree
-from .checker import Violation
-from .config import (
-    DEFAULT_INI,
-    ConfigLoader
-)
+from .config import Config
 from .formatter import format as format_tree
 from .syntax_tree import SyntaxTree
 
@@ -23,17 +19,16 @@ logger.setLevel(logging.INFO)
 
 @click.command(context_settings={'ignore_unknown_options': True})
 @click.argument('files', nargs=-1, type=click.Path())
-@click.option('--config', '-c',
-              default=DEFAULT_INI,
+@click.option('--config', '-c', 'config_file',
               type=click.Path(),
               help='Path to the config file that will be the authoritative config source.')
 @click.option('--format', '-f', 'is_format', is_flag=True, help='Prints formatted sql and exist')
-def main(files, config, is_format):
+def main(files, config_file, is_format):
     """
 
     Args:
         files:
-        config: path to the user config file.
+        config_file: path to the user config file.
         is_format: the flage whether outputs formatted sql
 
     Returns:
@@ -44,10 +39,9 @@ def main(files, config, is_format):
         # Todo: search *.sql file in current directory recursively.
         return
 
-    cl = ConfigLoader(config)
-    violations: Dict[str, List[Violation]] = {}
+    config = Config(config_file)
     trees: Dict[str, SyntaxTree] = {}
-    # Checks violations in each files
+    # constructs syntax tree in each files
     for f in files:
         if not os.path.exists(f):
             logger.warning(FileNotFoundError(f))
@@ -56,20 +50,20 @@ def main(files, config, is_format):
             logger.warning(IsADirectoryError(f))
 
         with open(f, 'r') as fp:
-            # constructs syntax tree
-            trees[f] = SyntaxTree.stmtptree(fp.read())
+            if is_format:
+                # constructs syntax tree
+                trees[f] = SyntaxTree.stmtptree(fp.read(), is_abstract=True)
+            else:
+                trees[f] = SyntaxTree.stmtptree(fp.read())
 
-            logger.debug(trees[f])
+                logger.debug(trees[f])
 
-            # check violations
-            violations[f] = check_tree(trees[f], cl)
-
-    for file, v_list in violations.items():
+    for file, tree in trees.items():
         if is_format:
-            format_tree(trees[file], cl, v_list)
-            logger.info(trees[file].stmtftree())
+            formatted_tree = format_tree(tree, config)
+            logger.info(formatted_tree.stmtftree())
         else:
-            for v in v_list:
+            for v in check_tree(tree, config):
                 logger.info('{} {}'.format(file, v.get_message()))
 
 
