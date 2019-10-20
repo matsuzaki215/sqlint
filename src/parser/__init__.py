@@ -1,4 +1,4 @@
-from .parser import parse
+from .base import parse
 from .token import Token
 
 __all__ = [

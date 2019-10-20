@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from typing import List
 
 from src.config import Config
 from src.parser import Token
@@ -92,26 +93,32 @@ class WhiteSpacesFormatter(Formatter):
     def _format(cls, tree: SyntaxTree):
         # ignores head of tokens because it is indent
         for leaf in tree.leaves:
-            for idx, token in enumerate(leaf.tokens):
-                # next of ( must not be WHITESPACE
-                if token.kind in [Token.BRACKET_LEFT, Token.WHITESPACE]:
-                    continue
-
-                if idx >= len(leaf.tokens)-1:
-                    continue
-
-                next_tokens = leaf.tokens[idx+1]
-                # previoues of comma or ) must not be WHITESPACE
-                # user function maybe
-                if (next_tokens.kind in [Token.COMMA, Token.BRACKET_RIGHT]) or \
-                   (token.kind == Token.IDENTIFIER and next_tokens.kind == Token.BRACKET_LEFT):
-                    continue
-
-                whitespace = '  ' if next_tokens.kind == Token.COMMENT else ' '
-
-                leaf.node.insert(idx+1, Token(word=whitespace, kind=Token.WHITESPACE))
+            leaf.node.tokens = WhiteSpacesFormatter.format_tokens(leaf.tokens)
 
             cls._format(leaf)
+
+    @staticmethod
+    def format_tokens(tokens: List[Token]):
+        result: List[Token] = []
+
+        for idx, token in enumerate(tokens):
+            result.append(token)
+            # next of ( must not be WHITESPACE
+            if (token.kind in [Token.BRACKET_LEFT, Token.WHITESPACE]) or \
+               (idx >= len(tokens) - 1):
+                continue
+
+            next_tokens = tokens[idx + 1]
+            # previoues of comma or ) must not be WHITESPACE
+            # user function maybe
+            if (next_tokens.kind in [Token.COMMA, Token.BRACKET_RIGHT]) or \
+               (token.kind == Token.IDENTIFIER and next_tokens.kind == Token.BRACKET_LEFT):
+                continue
+
+            whitespace = '  ' if next_tokens.kind == Token.COMMENT else ' '
+            result.append(Token(word=whitespace, kind=Token.WHITESPACE))
+
+        return result
 
 
 # TODO: keep Idempotency

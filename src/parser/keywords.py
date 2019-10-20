@@ -18,7 +18,10 @@ RESERVED_KEYWORDS = [
     'PRECEDING', 'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT', 'RIGHT', 'ROLLUP',
     'ROWS', 'SELECT', 'SET', 'SOME', 'STRUCT', 'TABLESAMPLE', 'THEN', 'TO',
     'TREAT', 'TRUE', 'UNBOUNDED', 'UNION', 'UNNEST', 'USING', 'WHEN', 'WHERE',
-    'WINDOW', 'WITH', 'WITHIN'
+    'WINDOW', 'WITH', 'WITHIN',
+    # BigQuery standard-sql user functions
+    # https://cloud.google.com/bigquery/docs/reference/standard-sql/user-defined-functions
+    'TEMP', 'TEMPORARY', 'RETURNS', 'LANGUAGE'
 ]
 # BigQuery standard-sql functions
 # https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators
@@ -76,11 +79,6 @@ RESERVED_FUNCTIONS = [
     # net-functions
     # Customize
     'TIMESTAMP'
-]
-# BigQuery standard-sql user functions
-# https://cloud.google.com/bigquery/docs/reference/standard-sql/user-defined-functions
-RESERVED_USER_FUNCTIONS = [
-    'TEMP', 'TEMPORARY', 'RETURNS', 'LANGUAGE'
 ]
 BINARY_OPERATORS_ESCAPED = [
     '=', '<', '>', '!',

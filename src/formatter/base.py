@@ -34,7 +34,7 @@ def format(tree: SyntaxTree, config: Config) -> SyntaxTree:
     root.add_leaf(leaf)
 
     # reshapes tree
-    _reshape_tree(leaf)
+    _reshape_tree(leaf, config)
 
     # for examples inserting indent or whitespaces, re-formating keyword and positioning comma, etc
     _format_tree(root, config)
@@ -60,7 +60,7 @@ def _gather_tokens(tree: SyntaxTree) -> List[Token]:
     return tokens
 
 
-def _reshape_tree(tree: SyntaxTree):
+def _reshape_tree(tree: SyntaxTree, config: Config):
     parent, children, sibling = _split_tokens(tree)
 
     if len(parent) and parent[0].word.lower() == 'when':
@@ -72,6 +72,41 @@ def _reshape_tree(tree: SyntaxTree):
 
     tree.tokens = parent
 
+    # checks tokens(line) length
+    tokens_and_spaces = fmt.WhiteSpacesFormatter.format_tokens(parent)
+    length = sum([len(tkn) for tkn in tokens_and_spaces])
+    max_length = config.max_line_length
+
+    if length > max_length:
+        _p, _c, _s = grp.LongLineGrouper.group(parent, tree)
+        if len(_p) and _p[0].word.lower() == 'when':
+            print('x' * 10)
+            print(f'parent = {_p}')
+            print(f'children = {_c}')
+            print(f'sibling = {_s}')
+            print('x' * 10)
+
+        tree.tokens = _p
+        if _c:
+            _tree: SyntaxTree = SyntaxTree(
+                depth=tree.depth + 1,
+                line_num=0,
+                tokens=_c,
+                parent=tree,
+                is_abstract=True)
+            tree.add_leaf(_tree)
+            _reshape_tree(_tree, config)
+
+        if _s:
+            _tree: SyntaxTree = SyntaxTree(
+                depth=tree.depth,
+                line_num=0,
+                tokens=_s,
+                parent=tree.parent,
+                is_abstract=True)
+            tree.parent.add_leaf(_tree)
+            _reshape_tree(_tree, config)
+
     if children:
         children_tree: SyntaxTree = SyntaxTree(
             depth=tree.depth+1,
@@ -80,7 +115,7 @@ def _reshape_tree(tree: SyntaxTree):
             parent=tree,
             is_abstract=True)
         tree.add_leaf(children_tree)
-        _reshape_tree(children_tree)
+        _reshape_tree(children_tree, config)
 
     if sibling:
         sibling_tree: SyntaxTree = SyntaxTree(
@@ -90,9 +125,7 @@ def _reshape_tree(tree: SyntaxTree):
             parent=tree.parent,
             is_abstract=True)
         tree.parent.add_leaf(sibling_tree)
-        _reshape_tree(sibling_tree)
-
-    return
+        _reshape_tree(sibling_tree, config)
 
 
 def _split_tokens(tree: SyntaxTree) -> Tuple[List[Token], List[Token], List[Token]]:

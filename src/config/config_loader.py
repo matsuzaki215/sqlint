@@ -15,6 +15,7 @@ SECTION = 'sqlint'
 
 # type of each config values
 NAME_TYPES = {
+  'max-line-length': int,  # max line length
   'comma-position': str,  # Comma position in breaking a line
   'keyword-style': str,  # Reserved keyword style
   'indent-steps': int  # indent steps in breaking a line
@@ -100,6 +101,16 @@ class ConfigLoader:
 class Config:
     def __init__(self, config_file: Optional[str] = DEFAULT_INI):
         self.loader: ConfigLoader = ConfigLoader(config_file)
+
+    @property
+    def max_line_length(self) -> int:
+        result = self.loader.get('max-line-length')
+        if result < 32:
+            warnings.warn(f'max-line-length value must be more 32, but {result}'
+                          f' So defualt value(128) was used.')
+            return 128
+
+        return result
 
     @property
     def comma_position(self) -> str:

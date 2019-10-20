@@ -22,7 +22,7 @@ class Grouper(metaclass=ABCMeta):
             if bracket_count == 0 and token.kind in [Token.COMMA, Token.COMMENT]:
                 return tokens[0:idx + 1], [], tokens[idx + 1:]
 
-        return tokens[0:], [], []
+        return tokens, [], []
 
 
 class IdentifierGrouper(Grouper):
@@ -53,7 +53,7 @@ class IdentifierGrouper(Grouper):
         ]
 
         bracket_count = 0
-        for idx, token in enumerate(tokens[0:]):
+        for idx, token in enumerate(tokens):
             bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
             bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
 
@@ -72,6 +72,25 @@ class RightBrackerGrouper(Grouper):
         return tokens[0:1], [], tokens[1:]
 
 
+class LongLineGrouper(Grouper):
+    @classmethod
+    def group(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[Token], List[Token]]:
+        bracket_count = 0
+        left_index = 0
+        for idx, token in enumerate(tokens):
+            if token.kind == Token.BRACKET_LEFT:
+                if bracket_count == 0:
+                    left_index = idx
+                bracket_count += 1
+
+            if token.kind == Token.BRACKET_RIGHT:
+                if bracket_count == 1:
+                    return tokens[0:left_index+1], tokens[left_index+1:idx], tokens[idx:]
+                bracket_count -= 1
+
+        return tokens, [], []
+
+
 class CommaGrouper(Grouper):
     @classmethod
     def group(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[Token], List[Token]]:
@@ -86,7 +105,7 @@ class CommaGrouper(Grouper):
             as_token = Token(word='AS', kind=Token.KEYWORD)
 
             if len(tokens) <= 2:
-                return tokens[0:], [], []
+                return tokens, [], []
 
             if tokens[0].kind != Token.COMMA:
                 raise ValueError('a head of tokens must be "," sequence.')
@@ -120,7 +139,7 @@ class CommaGrouper(Grouper):
             if bracket_count == 0 and token.kind == Token.COMMA:
                 return tokens[0:idx + 1], [], tokens[idx + 1:]
 
-        return tokens[0:], [], []
+        return tokens, [], []
 
 
 class KeywordGrouper(Grouper):
@@ -156,7 +175,7 @@ class KeywordGrouper(Grouper):
             if word in keys:
                 return func(tokens)
 
-        return tokens[0:], [], []
+        return tokens, [], []
 
     @classmethod
     def _group_create(cls, tokens: List[Token]) -> Tuple[List[Token], List[Token], List[Token]]:
@@ -209,7 +228,7 @@ class KeywordGrouper(Grouper):
     @classmethod
     def _group_as(cls, tokens: List[Token]) -> Tuple[List[Token], List[Token], List[Token]]:
         if len(tokens) <= 2:
-            return tokens[0:], [], []
+            return tokens, [], []
 
         if tokens[1].kind != Token.BRACKET_LEFT:
             return tokens[0:2], [], tokens[2:]
@@ -251,7 +270,7 @@ class KeywordGrouper(Grouper):
         as_token = Token(word='AS', kind=Token.KEYWORD)
 
         if len(tokens) <= 2:
-            return tokens[0:], [], []
+            return tokens, [], []
 
         if tokens[1].kind != Token.IDENTIFIER:
             # TODO: raises SQL error or check this as Violations
@@ -450,9 +469,9 @@ class KeywordGrouper(Grouper):
                     return tokens[0:idx+1], [], tokens[idx+1:]
         elif tokens[0] == using_token:
             # TODO: confirms whether overlooking other cases.
-            return tokens[0:], [], []
+            return tokens, [], []
 
-        return tokens[0:], [], []
+        return tokens, [], []
 
     @classmethod
     def _group_case(cls, tokens: List[Token]) -> Tuple[List[Token], List[Token], List[Token]]:
@@ -518,7 +537,7 @@ class KeywordGrouper(Grouper):
             if token == when_token and case_count <= 1 and bracket_count == 0:
                 return tokens[0:idx+1], [], tokens[idx+1:]
 
-        return tokens[0:], [], []
+        return tokens, [], []
 
     @classmethod
     def _group_join(cls, tokens: List[Token]) -> Tuple[List[Token], List[Token], List[Token]]:
