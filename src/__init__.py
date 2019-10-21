@@ -1,23 +1,11 @@
+from .parser import parse
+from .checker import check
+from .formatter import format
+
 __version__ = '0.1.2'
 
-
-'''
-def parse(stmt):
-    """
-
-    :param stmt:
-    :return:
-    """
-
-    return api.parse(stmt)
-
-
-def check(stmt):
-    """
-
-    :param stmt:
-    :return:
-    """
-
-    return api.check(stmt)
-'''
+__all__ = [
+    'parse',
+    'check',
+    'format'
+]

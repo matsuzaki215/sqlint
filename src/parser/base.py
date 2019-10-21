@@ -2,8 +2,8 @@ import re
 from sre_parse import Pattern
 from typing import List, Tuple
 
-from .token import Token
 from . import pattern
+from .token import Token
 
 
 def parse(stmt: str) -> List[List[Token]]:
@@ -69,7 +69,7 @@ def _tokenize_comment_end(text: str) -> Tuple[str, List[Token], bool]:
     return '', [Token(text, Token.COMMENT)], True
 
 
-def _tokenize_comment_begin(text: str) -> Tuple[str, List[Token], bool]:
+def _tokenize_comment_begin(text: str) -> Tuple[str, List[Token]]:
     """TODO: Describes doc string """
 
     tokens: List[Token] = []
@@ -80,9 +80,9 @@ def _tokenize_comment_begin(text: str) -> Tuple[str, List[Token], bool]:
             tokens.append(Token(match.group(1), Token.WHITESPACE))
         tokens.append(Token(match.group(2), Token.COMMENT))
 
-        return text[match.end():], tokens, True
+        return text[match.end():], tokens
 
-    return text, [], False
+    return text, []
 
 
 def _tokenize_comment_single(text: str) -> Tuple[str, List[Token]]:
@@ -119,7 +119,7 @@ def _tokenize_bilateral(text: str, token: str, ptn: Pattern) -> Tuple[str, List[
     return text, []
 
 
-def _tokenize_keyword(text: str, ptn: Pattern) -> Tuple[str, List[Token]]:
+def _tokenize_keyword(text: str, token: str, ptn: Pattern) -> Tuple[str, List[Token]]:
     """TODO: Describes doc string """
 
     tokens: List[Token] = []
@@ -128,7 +128,7 @@ def _tokenize_keyword(text: str, ptn: Pattern) -> Tuple[str, List[Token]]:
     if match:
         if len(match.group(1)) > 0:
             tokens.append(Token(match.group(1), Token.WHITESPACE))
-        tokens.append(Token(match.group(2), Token.KEYWORD))
+        tokens.append(Token(match.group(2), token))
         if match.group(3) == '(':
             tokens.append(Token(match.group(3), Token.BRACKET_LEFT))
         elif len(match.group(3)) > 0:
@@ -140,7 +140,7 @@ def _tokenize_keyword(text: str, ptn: Pattern) -> Tuple[str, List[Token]]:
 
 
 def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bool]:
-    """Tokenizes one line sql statement to some tokens.
+    """Tokenizes one line of sql statement to some tokens.
 
     Args:
         text: sql statement
@@ -160,9 +160,10 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
             continue
 
         # comment begin (/*)
-        text, matches, is_comment_line = _tokenize_comment_begin(text)
+        text, matches = _tokenize_comment_begin(text)
         tokens.extend(matches)
         if matches:
+            is_comment_line = True
             continue
 
         # comment single(#, --)
@@ -190,10 +191,14 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
             continue
 
         # keywords
-        for ptn in pattern.KEYWORDS:
-            text, matches = _tokenize_keyword(text, ptn=ptn)
-            if matches:
-                break
+        text, matches = _tokenize_keyword(text, token=Token.KEYWORD, ptn=pattern.KEYWORDS)
+        tokens.extend(matches)
+        if matches:
+            continue
+
+        # functions
+        # Some functions duplicated with keywords are recognized as "KEYWORD"
+        text, matches = _tokenize_keyword(text, token=Token.FUNCTION, ptn=pattern.FUNCTIONS)
         tokens.extend(matches)
         if matches:
             continue
@@ -204,13 +209,13 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
         if matches:
             continue
 
-        # quotes: "hoge", 'fuga', `piyo`
+        # quotes: "hoge", 'fuga', `piyo` as identifier
         text, matches = _tokenize_bilateral(text, token=Token.IDENTIFIER, ptn=pattern.QUOTES)
         tokens.extend(matches)
         if matches:
             continue
 
-        # identifier
+        # others are identifier
         text, matches = _tokenize_bilateral(text, token=Token.IDENTIFIER, ptn=pattern.IDENTIFIER)
         tokens.extend(matches)
         if matches:

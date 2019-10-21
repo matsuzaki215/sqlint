@@ -1,7 +1,7 @@
 import logging
 from typing import List, Optional
 
-from .token import Token
+from .parser import Token
 from .parser import parse as parse_sql
 
 logger = logging.getLogger(__name__)
@@ -58,6 +58,9 @@ class Node:
     def __len__(self):
         return len(self.tokens)
 
+    def __str__(self):
+        return ' '.join([str(tkn) for tkn in self.tokens])
+
     def get_position(self, index: int):
         """Returns length of texts before Nth token.
 
@@ -69,6 +72,15 @@ class Node:
         """
         index = max(index, 0)
         return sum([len(token) for token in self.tokens[0: index]])+1
+
+    def append(self, token: Token):
+        self.tokens.append(token)
+
+    def extend(self, token: List[Token]):
+        self.tokens.extend(token)
+
+    def insert(self, index: int, token: Token):
+        self.tokens.insert(index, token)
 
     def trip_kind(self, *args) -> 'Node':
         return self.ltrip_kind(*args).rtrip_kind(*args)
@@ -121,7 +133,8 @@ class SyntaxTree:
                  depth: int,
                  line_num: int,
                  tokens: List[Token] = None,
-                 parent: Optional['SyntaxTree'] = None):
+                 parent: Optional['SyntaxTree'] = None,
+                 is_abstract: bool = False):
         """
 
         Args:
@@ -129,6 +142,8 @@ class SyntaxTree:
             parent: parent tree node
             line_num: the number of line in source sql this tokens belongs to.
             tokens: a list of tokens which is tokenized sql statemnt.
+            is_abstract: If this is True, this tree is constructed abstractly.
+                          Abstract tree ignores whitespaces and blank lines.
 
         Returns:
 
@@ -138,6 +153,7 @@ class SyntaxTree:
         self.leaves: List[SyntaxTree] = list()
         self.parent: Optional['SyntaxTree'] = parent
         self.node: Node = Node(line_num=line_num, tokens=tokens)
+        self.is_abstract: bool = is_abstract
 
     @property
     def depth(self) -> int:
@@ -154,6 +170,10 @@ class SyntaxTree:
     @property
     def node(self) -> Node:
         return self._node
+
+    @property
+    def line_num(self) -> int:
+        return self._node.line_num
 
     @property
     def tokens(self) -> List[Token]:
@@ -177,6 +197,10 @@ class SyntaxTree:
     def node(self, value: Node):
         self._node = value
 
+    @ tokens.setter
+    def tokens(self, value):
+        self._node._tokens = value
+
     @property
     def text(self):
         return self.node.text
@@ -194,11 +218,13 @@ class SyntaxTree:
         return self.node.indent
 
     @classmethod
-    def stmtptree(cls, stmt: str, sql_type: str = 'StandardSQL') -> 'SyntaxTree':
+    def stmtptree(cls, stmt: str, is_abstract: bool = False, sql_type: str = 'StandardSQL') -> 'SyntaxTree':
         """Returns SyntaxTree by parsing sql statement.
 
         Args:
             stmt: sql statemtnt
+            is_abstract: If this is True, this tree is constructed abstractly.
+                          Abstract tree ignores whitespaces, comments and blank lines.
             sql_type: target sql type (StandardSQL only now)
 
         Returns:
@@ -212,19 +238,20 @@ class SyntaxTree:
         token_list: List[List[Token]] = parse_sql(stmt)
 
         # creates empty syntax tree as guard
-        parent_vertex = SyntaxTree(depth=0, line_num=0)
+        parent_vertex = SyntaxTree(depth=0, line_num=0, is_abstract=is_abstract)
         result = parent_vertex
 
         for line_num, tokens in enumerate(token_list):
-            # DEBUG
-            # print(tokens)
-            indent = 0
+            # skips the line having only whitespaces or which is blank
+            if is_abstract:
+                tokens = cls._ignore_token(tokens)
+                if not tokens:
+                    continue
 
             # if line is not blank, get indent size
-            if len(tokens) > 0:
-                head = tokens[0]
-                if head.kind == Token.WHITESPACE:
-                    indent = len(head.word)
+            indent = 0
+            if len(tokens) > 0 and tokens[0].kind == Token.WHITESPACE:
+                indent = len(tokens[0].word)
 
             # check whether parent_node is root node
             while indent <= parent_vertex.indent and 0 < parent_vertex.depth:
@@ -234,9 +261,26 @@ class SyntaxTree:
                 depth=parent_vertex.depth + 1,
                 line_num=line_num + 1,
                 tokens=tokens,
-                parent=parent_vertex)
+                parent=parent_vertex,
+                is_abstract=is_abstract)
             parent_vertex.add_leaf(_tree)
             parent_vertex = _tree
+
+        return result
+
+    @staticmethod
+    def _ignore_token(tokens: List[Token]):
+        """Returns tokens exclueded ones in abstract tree"""
+
+        result = []
+        ignore_kinds = [Token.WHITESPACE]
+
+        if len(tokens) == 0:
+            return result
+
+        for token in tokens:
+            if token.kind not in ignore_kinds:
+                result.append(token)
 
         return result
 
@@ -255,17 +299,13 @@ class SyntaxTree:
         Returns:
             sql statement
         """
+
         result = ''
-
         for leaf in tree.leaves:
-            # TODO: get default indent from config file
-            indent = '    '
-            text = f'{indent * (leaf.depth - 1)}{leaf.text.lstrip()}'
-
             if len(result) == 0:
-                result = text
+                result = leaf.text
             else:
-                result = f'{result}\n{text}'
+                result = f'{result}\n{leaf.text}'
 
             appendix = SyntaxTree._stmtftree(leaf)
             if len(appendix) > 0:
@@ -275,6 +315,9 @@ class SyntaxTree:
 
     def add_leaf(self, leaf: 'SyntaxTree'):
         self.leaves.append(leaf)
+
+    def insert_leaf(self, index: int, leaf: 'SyntaxTree'):
+        self.leaves.insert(index, leaf)
 
     def get_position(self, index: int):
         """Returns length of texts at head of Nth token.

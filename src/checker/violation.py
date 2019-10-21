@@ -1,8 +1,8 @@
 from typing import Dict
 from enum import Enum
 
-from src.parser.token import Token
-from src.parser.syntax_tree import SyntaxTree
+from src.parser import Token
+from src.syntax_tree import SyntaxTree
 
 
 class Code(Enum):
@@ -59,9 +59,9 @@ class Code(Enum):
 
 
 class Violation:
-    def __init__(self, tree: SyntaxTree, pos: int, code: Code, **kwargs):
+    def __init__(self, tree: SyntaxTree, index: int, code: Code, **kwargs):
         self.tree: SyntaxTree = tree
-        self.pos: int = pos
+        self.index: int = index
         self.code: Code = code
         self.params: Dict = kwargs
 
@@ -70,17 +70,17 @@ class Violation:
 
         return _template.format(
             line=self.tree.node.line_num,
-            pos=self.pos,
+            pos=self.tree.get_position(self.index),
             **self.params)
 
 
 class IndentStepsViolation(Violation):
-    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
-        super().__init__(tree, pos, Code.INDENT_STEPS, **kwargs)
+    def __init__(self, tree: SyntaxTree, index: int, **kwargs):
+        super().__init__(tree, index, Code.INDENT_STEPS, **kwargs)
 
 
 class KeywordStyleViolation(Violation):
-    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
+    def __init__(self, tree: SyntaxTree, index: int, **kwargs):
         if 'style' not in kwargs:
             raise KeyError(f'style must be passed.')
 
@@ -95,11 +95,11 @@ class KeywordStyleViolation(Violation):
         else:
             raise ValueError('keyword style must be in [upper-all, upper-head, lower]')
 
-        super().__init__(tree, pos, _code, **kwargs)
+        super().__init__(tree, index, _code, **kwargs)
 
 
 class CommaPositionViolation(Violation):
-    def __init__(self, tree: SyntaxTree, pos: int, comma_position: str, **kwargs):
+    def __init__(self, tree: SyntaxTree, index: int, comma_position: str, **kwargs):
         self.comma_position = comma_position
 
         if comma_position == 'head':
@@ -109,40 +109,40 @@ class CommaPositionViolation(Violation):
         else:
             raise ValueError('position must be in [head, end]')
 
-        super().__init__(tree, pos, _code, **kwargs)
+        super().__init__(tree, index, _code, **kwargs)
 
 
 class MultiSpacesViolation(Violation):
-    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
-        super().__init__(tree, pos, Code.WHITESPACE_MULTIPLE, **kwargs)
+    def __init__(self, tree: SyntaxTree, index: int, **kwargs):
+        super().__init__(tree, index, Code.WHITESPACE_MULTIPLE, **kwargs)
 
 
 class WhitespaceViolation(Violation):
-    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
+    def __init__(self, tree: SyntaxTree, index: int, **kwargs):
         if 'token' not in kwargs:
             raise KeyError(f'token must be passed.')
         if 'position' not in kwargs:
             raise KeyError(f'position must be passed.')
 
-        token = kwargs['token']
-        position = kwargs['position']
+        self.token = kwargs['token']
+        self.position = kwargs['position']
 
         # TODO: modify more simple, maybe it is better to split several classes.
-        if token == Token.COMMA:
-            if position == 'before':
+        if self.token == Token.COMMA:
+            if self.position == 'before':
                 _code = Code.WHITESPACE_BEFORE_COMMA
-            elif position == 'after':
+            elif self.position == 'after':
                 _code = Code.WHITESPACE_AFTER_COMMA
             else:
                 raise ValueError('whitespace position must be in [before, after]')
-        elif token == Token.BRACKET_LEFT:
+        elif self.token == Token.BRACKET_LEFT:
             _code = Code.WHITESPACE_AFTER_BRACKET
-        elif token == Token.BRACKET_RIGHT:
+        elif self.token == Token.BRACKET_RIGHT:
             _code = Code.WHITESPACE_BEFORE_BRACKET
-        elif token == Token.OPERATOR:
-            if position == 'before':
+        elif self.token == Token.OPERATOR:
+            if self.position == 'before':
                 _code = Code.WHITESPACE_BEFORE_OPERATOR
-            elif position == 'after':
+            elif self.position == 'after':
                 _code = Code.WHITESPACE_AFTER_OPERATOR
             else:
                 raise ValueError('whitespace position must be in [before, after]')
@@ -150,31 +150,31 @@ class WhitespaceViolation(Violation):
             raise ValueError('token kind must be in [{}, {}, {}, {}]'.format(
                 Token.COMMA, Token.BRACKET_LEFT, Token.BRACKET_RIGHT, Token.OPERATOR))
 
-        super().__init__(tree, pos, _code, **kwargs)
+        super().__init__(tree, index, _code, **kwargs)
 
 
 class JoinTableViolation(Violation):
-    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
-        super().__init__(tree, pos, Code.JOIN_TABLE, **kwargs)
+    def __init__(self, tree: SyntaxTree, index: int, **kwargs):
+        super().__init__(tree, index, Code.JOIN_TABLE, **kwargs)
 
 
 class JoinContextViolation(Violation):
-    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
-        super().__init__(tree, pos, Code.JOIN_CONTEXT, **kwargs)
+    def __init__(self, tree: SyntaxTree, index: int, **kwargs):
+        super().__init__(tree, index, Code.JOIN_CONTEXT, **kwargs)
 
 
 class MultiBlankLineViolation(Violation):
-    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
-        super().__init__(tree, pos, Code.LINE_BlANK_MULTIPLE, **kwargs)
+    def __init__(self, tree: SyntaxTree, index: int, **kwargs):
+        super().__init__(tree, index, Code.LINE_BlANK_MULTIPLE, **kwargs)
 
 
 class OnlyWhitespaceViolation(Violation):
-    def __init__(self, tree: SyntaxTree, pos: int, **kwargs):
-        super().__init__(tree, pos, Code.LINE_ONLY_WHITESPACE, **kwargs)
+    def __init__(self, tree: SyntaxTree, index: int, **kwargs):
+        super().__init__(tree, index, Code.LINE_ONLY_WHITESPACE, **kwargs)
 
 
 class BreakingLineViolation(Violation):
-    def __init__(self, tree: SyntaxTree, pos: int, position: int, **kwargs):
+    def __init__(self, tree: SyntaxTree, index: int, position: int, **kwargs):
         if position == 'before':
             _code = Code.BREAK_LINE_BEFORE
         elif position == 'after':
@@ -182,4 +182,4 @@ class BreakingLineViolation(Violation):
         else:
             raise ValueError('position must be in [before, after]')
 
-        super().__init__(tree, pos, _code, **kwargs)
+        super().__init__(tree, index, _code, **kwargs)

@@ -18,9 +18,11 @@ RESERVED_KEYWORDS = [
     'PRECEDING', 'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT', 'RIGHT', 'ROLLUP',
     'ROWS', 'SELECT', 'SET', 'SOME', 'STRUCT', 'TABLESAMPLE', 'THEN', 'TO',
     'TREAT', 'TRUE', 'UNBOUNDED', 'UNION', 'UNNEST', 'USING', 'WHEN', 'WHERE',
-    'WINDOW', 'WITH', 'WITHIN'
+    'WINDOW', 'WITH', 'WITHIN',
+    # BigQuery standard-sql user functions
+    # https://cloud.google.com/bigquery/docs/reference/standard-sql/user-defined-functions
+    'TEMP', 'TEMPORARY', 'RETURNS', 'LANGUAGE'
 ]
-
 # BigQuery standard-sql functions
 # https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators
 RESERVED_FUNCTIONS = [
@@ -72,60 +74,34 @@ RESERVED_FUNCTIONS = [
     'TIMESTAMP_DIFF', 'TIMESTAMP_TRUNC', 'FORMAT_TIMESTAMP', 'PARSE_TIMESTAMP', 'TIMESTAMP_SECONDS',
     'TIMESTAMP_MILLIS', 'TIMESTAMP_MICROS', 'UNIX_SECONDS', 'UNIX_MILLIS', 'UNIX_MICROS',
     # security-functions
-    'SESSION_USER'
-    # TODO: Not Supported.
-    # net-functions
+    'SESSION_USER',
+    # TODO: Supported. net-functions
+    # Customize: cast-functions
+    'TIMESTAMP', 'DATE', 'DATETIME'
 ]
-
 BINARY_OPERATORS_ESCAPED = [
     '=', '<', '>', '!',
     r'\+', r'\-', r'\*', '/', '%',
 ]
 
-# TODO: organizes keywords to check list.
-EXCLUDED_CHECK_BREAK_LINE = [
-    # SELECT expression.*
-    'ALL', 'DISTINCT', 'EXCEPT', 'REPLACE',
-    # [AT TIME ZONE tz_spec]
-    # https://cloud.google.com/bigquery/docs/reference/standard-sql/timestamp_functions?hl=ja#extract
-    'AT', 'ARRAY', 'CONTAINS',
-    # cross aggregation
-    'CUBE', 'ROLLUP',
-    # FYI) About OVER: https://ichiroku11.hatenablog.jp/entry/2017/04/19/225831
-    'ROWS', 'OVER', 'PRECEDING', 'UNBOUNDED', 'FOLLOWING', 'PARTITION',
-    'CASE', 'USING',
-    # Unorganized
-    'UNNEST', 'UNION',
-    'ANY', 'ASSERT_ROWS_MODIFIED', 'COLLATE',
-    'CREATE', 'CURRENT', 'DEFAULT', 'DEFINE',
-    'END', 'ENUM', 'ESCAPE', 'EXCLUDE', 'EXISTS',
-    'EXTRACT', 'FALSE', 'FETCH',  'FOR',
-    'FULL', 'GROUPING', 'GROUPS', 'HASH', 'IGNORE',
-    'INTERSECT',  'INTO', 'IS',
-    'LATERAL', 'LOOKUP', 'MERGE', 'NATURAL', 'NEW', 'NO',
-    'NULL', 'NULLS', 'OF',
-    'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT',
-    'SET', 'SOME', 'STRUCT', 'TABLESAMPLE', 'TO',
-    'TREAT', 'TRUE',
-    'WINDOW', 'WITHIN'
-]
 
-# Checks whether line is broken after following keyword.
-KEYWORDS_BREAK_LINE_AFTER = [
-    'SELECT', 'FROM', 'WHERE', 'HAVING',  # GROUP BY, ORDER BY
-]
+def format(keyword: str, keyword_style: str) -> str:
+    """Returns formatted keyword
 
-# Checks whether line is broken before following keyword.
-KEYWORDS_BREAK_LINE_BEFORE = [
-    'ASC', 'DESC',
-]
+    Args:
+        keyword: target keyword
+        keyword_style: formatting style
 
-# TODO: checks whether line is not broken before or after following keyword.
-KEYWORDS_NOT_BREAK_LINE = [
-    'WITH', 'AS', 'NOT', 'BY',
-    'INNER', 'CROSS', 'LEFT', 'RIGHT', 'OUTER', 'JOIN', 'ON',
-    'BETWEEN', 'AND', 'OR', 'GROUP', 'CAST', 'ORDER', 'IF', 'ELSE',
-    'INTERVAL',
-    'WHEN', 'THEN',
-    'LIKE', 'IN', 'LIMIT',
-]
+    Returns:
+        formatted keyword
+    """
+    expected: str = keyword
+
+    if keyword_style == 'lower':
+        expected = keyword.lower()
+    if keyword_style == 'upper-all':
+        expected = keyword.upper()
+    if keyword_style == 'upper-head':
+        expected = f'{keyword[0].upper()}{keyword[1:].lower()}'
+
+    return expected

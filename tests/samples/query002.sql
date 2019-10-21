@@ -1,3 +1,6 @@
+/*
+comment
+*/
 select
     a
     , b  # comment1

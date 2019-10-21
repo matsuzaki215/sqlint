@@ -26,9 +26,9 @@ binary_operators = ''.join(BINARY_OPERATORS_ESCAPED)
 COMMA = re.compile(REGEX_COMMA)
 BRACKET_LEFT = re.compile(REGEX_BRACKET_LEFT)
 BRACKET_RIGHT = re.compile(REGEX_BRACKET_RIGHT)
-KEYWORDS = []
-for word in (set(RESERVED_KEYWORDS) | set(RESERVED_FUNCTIONS)):
-    KEYWORDS.append(re.compile(REGEX_KEYWORD.format(word), re.IGNORECASE))
+# unique_keywords = (set(RESERVED_KEYWORDS) | set(RESERVED_FUNCTIONS))
+KEYWORDS = re.compile(REGEX_KEYWORD.format('|'.join(RESERVED_KEYWORDS)), re.IGNORECASE)
+FUNCTIONS = re.compile(REGEX_KEYWORD.format('|'.join(RESERVED_FUNCTIONS)), re.IGNORECASE)
 OPERATOR = re.compile(REGEX_OPERATOR.format(binary_operators))
 COMMENT_SINGLE = re.compile(REGEX_COMMENT_SINGLE)
 COMMENT_BEGIN = re.compile(REGEX_COMMENT_BEGIN)
