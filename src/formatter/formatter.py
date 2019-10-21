@@ -23,7 +23,7 @@ class KeywordStyleFormatter(Formatter):
     def _format(cls, tree: SyntaxTree, keyword_style: str):
         for leaf in tree.leaves:
             for token in leaf.tokens:
-                if token.kind == Token.KEYWORD:
+                if token.kind in [Token.KEYWORD, Token.FUNCTION]:
                     token.word = format_keyword(token.word, keyword_style)
             cls._format(leaf, keyword_style)
 
@@ -40,6 +40,7 @@ class CommaPositionFormatter(Formatter):
     def _format_head(cls, tree: SyntaxTree):
         for idx, leaf in enumerate(tree.leaves):
             if leaf.tokens[-1].kind != Token.COMMA:
+                cls._format_head(leaf)
                 continue
 
             if idx < len(tree.leaves)-1:
@@ -54,12 +55,13 @@ class CommaPositionFormatter(Formatter):
         for idx, leaf in enumerate(tree.leaves):
             # ignores comma at zero indent because it may be with-comma
             if leaf.depth <= 1 or leaf.tokens[0].kind != Token.COMMA:
-                return
+                cls._format_end(leaf)
+                continue
 
             if idx > 0:
-                tree.leaves[idx-1].tokens.insert(-1, leaf.tokens.pop(0))
+                tree.leaves[idx-1].tokens.insert(len(tree.leaves), leaf.tokens.pop(0))
             elif leaf.parent and leaf.parent.depth > 0:
-                leaf.parent.tokens.insert(-1, leaf.tokens.pop(0))
+                leaf.parent.tokens.insert(len(tree.leaves), leaf.tokens.pop(0))
 
             cls._format_end(leaf)
 
@@ -103,8 +105,9 @@ class WhiteSpacesFormatter(Formatter):
 
         for idx, token in enumerate(tokens):
             result.append(token)
-            # next of ( must not be WHITESPACE
-            if (token.kind in [Token.BRACKET_LEFT, Token.WHITESPACE]) or \
+
+            # next of "(", functions, or whitespaces must not be WHITESPACE
+            if (token.kind in [Token.BRACKET_LEFT, Token.WHITESPACE, Token.FUNCTION]) or \
                (idx >= len(tokens) - 1):
                 continue
 

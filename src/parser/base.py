@@ -119,7 +119,7 @@ def _tokenize_bilateral(text: str, token: str, ptn: Pattern) -> Tuple[str, List[
     return text, []
 
 
-def _tokenize_keyword(text: str, ptn: Pattern) -> Tuple[str, List[Token]]:
+def _tokenize_keyword(text: str, token: str, ptn: Pattern) -> Tuple[str, List[Token]]:
     """TODO: Describes doc string """
 
     tokens: List[Token] = []
@@ -128,7 +128,7 @@ def _tokenize_keyword(text: str, ptn: Pattern) -> Tuple[str, List[Token]]:
     if match:
         if len(match.group(1)) > 0:
             tokens.append(Token(match.group(1), Token.WHITESPACE))
-        tokens.append(Token(match.group(2), Token.KEYWORD))
+        tokens.append(Token(match.group(2), token))
         if match.group(3) == '(':
             tokens.append(Token(match.group(3), Token.BRACKET_LEFT))
         elif len(match.group(3)) > 0:
@@ -191,7 +191,14 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
             continue
 
         # keywords
-        text, matches = _tokenize_keyword(text, ptn=pattern.KEYWORDS)
+        text, matches = _tokenize_keyword(text, token=Token.KEYWORD, ptn=pattern.KEYWORDS)
+        tokens.extend(matches)
+        if matches:
+            continue
+
+        # functions
+        # Some functions duplicated with keywords are recognized as "KEYWORD"
+        text, matches = _tokenize_keyword(text, token=Token.FUNCTION, ptn=pattern.FUNCTIONS)
         tokens.extend(matches)
         if matches:
             continue
@@ -202,13 +209,13 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
         if matches:
             continue
 
-        # quotes: "hoge", 'fuga', `piyo`
+        # quotes: "hoge", 'fuga', `piyo` as identifier
         text, matches = _tokenize_bilateral(text, token=Token.IDENTIFIER, ptn=pattern.QUOTES)
         tokens.extend(matches)
         if matches:
             continue
 
-        # identifier
+        # others are identifier
         text, matches = _tokenize_bilateral(text, token=Token.IDENTIFIER, ptn=pattern.IDENTIFIER)
         tokens.extend(matches)
         if matches:

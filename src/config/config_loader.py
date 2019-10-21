@@ -125,8 +125,8 @@ class Config:
     @property
     def keyword_style(self) -> str:
         result = self.loader.get('keyword-style')
-        if result not in ['upper', 'lower', 'upper-head']:
-            warnings.warn(f'keyword-style value must be "upper", "lower" or "upper-head", but {result}.'
+        if result not in ['upper-all', 'lower', 'upper-head']:
+            warnings.warn(f'keyword-style value must be "upper-all", "lower" or "upper-head", but {result}.'
                           f' So defualt value(lower) was used.')
             return 'lower'
 

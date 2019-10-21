@@ -8,6 +8,7 @@ class Token:
     BRACKET_LEFT = 'Left Bracket'
     BRACKET_RIGHT = 'Right Bracket'
     KEYWORD = 'Keyword'
+    FUNCTION = 'Function'
     OPERATOR = 'Operator'
     COMMENT = 'Comment'
     IDENTIFIER = 'Identifier'

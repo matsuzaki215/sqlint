@@ -67,7 +67,7 @@ class KeywordStyleChecker(Checker):
 
         for leaf in tree.leaves:
             for idx, token in enumerate(leaf.tokens):
-                if token.kind != Token.KEYWORD:
+                if token.kind not in [Token.KEYWORD, Token.FUNCTION]:
                     continue
 
                 word: str = token.word
@@ -382,6 +382,7 @@ class JoinChecker(Checker):
         """Checks whether join are described fully, for example [inner join], [left outer join], [right outer join] """
         violation_list: List[Violation] = list()
 
+        # TODO: too deeply nest and complex code
         for leaf in tree.leaves:
             join_indexes = [i for i, x in enumerate(leaf.tokens) if x.word.upper() == 'JOIN']
 
@@ -465,8 +466,9 @@ class LineChecker(Checker):
             # If this line is not blank and 2 or more previous lines are blank, stack violation.
             if is_blank:
                 blank_count += 1
-            elif blank_count >= 2:
-                violation_list.append(violation.MultiBlankLineViolation(tree=leaf, index=0))
+            else:
+                if blank_count >= 2:
+                    violation_list.append(violation.MultiBlankLineViolation(tree=leaf, index=0))
                 blank_count = 0
 
             v_list, blank_count, last_tree = LineChecker._check_blank_line(leaf, blank_count)

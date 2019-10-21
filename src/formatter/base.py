@@ -63,72 +63,54 @@ def _gather_tokens(tree: SyntaxTree) -> List[Token]:
 def _reshape_tree(tree: SyntaxTree, config: Config):
     parent, children, sibling = _split_tokens(tree)
 
-    if len(parent) and parent[0].word.lower() == 'when':
+    """ DEBUG:
+    if parent and parent[0].word.lower() == 'when':
         print('-'*10)
         print(f'parent = {parent}')
         print(f'children = {children}')
         print(f'sibling = {sibling}')
         print('-'*10)
+    """
+
+    siblings = [sibling]
 
     tree.tokens = parent
 
     # checks tokens(line) length
     tokens_and_spaces = fmt.WhiteSpacesFormatter.format_tokens(parent)
-    length = sum([len(tkn) for tkn in tokens_and_spaces])
+    length = sum([len(tkn) for tkn in tokens_and_spaces]) + config.indent_steps*(tree.depth-1)
     max_length = config.max_line_length
 
     if length > max_length:
         _p, _c, _s = grp.LongLineGrouper.group(parent, tree)
-        if len(_p) and _p[0].word.lower() == 'when':
-            print('x' * 10)
-            print(f'parent = {_p}')
-            print(f'children = {_c}')
-            print(f'sibling = {_s}')
-            print('x' * 10)
-
         tree.tokens = _p
-        if _c:
+        children = _c + children
+        siblings.insert(0, _s)
+
+    for chn in children:
+        if chn:
             _tree: SyntaxTree = SyntaxTree(
-                depth=tree.depth + 1,
+                depth=tree.depth+1,
                 line_num=0,
-                tokens=_c,
+                tokens=chn,
                 parent=tree,
                 is_abstract=True)
             tree.add_leaf(_tree)
             _reshape_tree(_tree, config)
 
-        if _s:
+    for sbg in siblings:
+        if sbg:
             _tree: SyntaxTree = SyntaxTree(
                 depth=tree.depth,
                 line_num=0,
-                tokens=_s,
+                tokens=sbg,
                 parent=tree.parent,
                 is_abstract=True)
             tree.parent.add_leaf(_tree)
             _reshape_tree(_tree, config)
 
-    if children:
-        children_tree: SyntaxTree = SyntaxTree(
-            depth=tree.depth+1,
-            line_num=0,
-            tokens=children,
-            parent=tree,
-            is_abstract=True)
-        tree.add_leaf(children_tree)
-        _reshape_tree(children_tree, config)
 
-    if sibling:
-        sibling_tree: SyntaxTree = SyntaxTree(
-            depth=tree.depth,
-            line_num=0,
-            tokens=sibling,
-            parent=tree.parent,
-            is_abstract=True)
-        tree.parent.add_leaf(sibling_tree)
-        _reshape_tree(sibling_tree, config)
-
-
-def _split_tokens(tree: SyntaxTree) -> Tuple[List[Token], List[Token], List[Token]]:
+def _split_tokens(tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
     """
 
     Args:
@@ -142,7 +124,7 @@ def _split_tokens(tree: SyntaxTree) -> Tuple[List[Token], List[Token], List[Toke
     if not tokens:
         return [], [], []
 
-    if tokens[0].kind == Token.KEYWORD:
+    if tokens[0].kind in [Token.KEYWORD, Token.FUNCTION]:
         return grp.KeywordGrouper.group(tokens, tree)
     elif tokens[0].kind == Token.COMMA:
         return grp.CommaGrouper.group(tokens, tree)

@@ -75,10 +75,9 @@ RESERVED_FUNCTIONS = [
     'TIMESTAMP_MILLIS', 'TIMESTAMP_MICROS', 'UNIX_SECONDS', 'UNIX_MILLIS', 'UNIX_MICROS',
     # security-functions
     'SESSION_USER',
-    # TODO: Supported.
-    # net-functions
-    # Customize
-    'TIMESTAMP'
+    # TODO: Supported. net-functions
+    # Customize: cast-functions
+    'TIMESTAMP', 'DATE', 'DATETIME'
 ]
 BINARY_OPERATORS_ESCAPED = [
     '=', '<', '>', '!',
