@@ -1,4 +1,3 @@
-import logging
 from typing import List, Optional
 
 from .parser import Token

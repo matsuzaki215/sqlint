@@ -10,11 +10,6 @@ from .syntax_tree import SyntaxTree
 
 # setting logger
 logger = logging.getLogger(__name__)
-formatter = logging.Formatter('%(message)s')
-handler = logging.StreamHandler()
-handler.setFormatter(formatter)
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
 
 
 @click.command(context_settings={'ignore_unknown_options': True})
@@ -44,10 +39,12 @@ def main(files, config_file, is_format):
     # constructs syntax tree in each files
     for f in files:
         if not os.path.exists(f):
-            logger.warning(FileNotFoundError(f))
+            logger.warning(f'file is not found: {f}')
+            continue
 
         if os.path.isdir(f):
-            logger.warning(IsADirectoryError(f))
+            logger.warning(f'{f} is a directory')
+            continue
 
         with open(f, 'r') as fp:
             if is_format:
@@ -55,8 +52,6 @@ def main(files, config_file, is_format):
                 trees[f] = SyntaxTree.sqlptree(fp.read(), is_abstract=True)
             else:
                 trees[f] = SyntaxTree.sqlptree(fp.read())
-
-                logger.debug(trees[f])
 
     for file, tree in trees.items():
         if is_format:

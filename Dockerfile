@@ -14,5 +14,6 @@ RUN pip install --upgrade pip
 RUN pip3 install -r /tmp/requirements.txt
 
 COPY src /work
+COPY tox.ini /work
 COPY tests /work/tests
 WORKDIR /work
