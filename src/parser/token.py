@@ -5,6 +5,7 @@ T = TypeVar('T')
 
 class Token:
     COMMA = 'Comma'
+    DOT = 'Dot'
     BRACKET_LEFT = 'Left Bracket'
     BRACKET_RIGHT = 'Right Bracket'
     KEYWORD = 'Keyword'

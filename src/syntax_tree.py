@@ -218,11 +218,11 @@ class SyntaxTree:
         return self.node.indent
 
     @classmethod
-    def stmtptree(cls, stmt: str, is_abstract: bool = False, sql_type: str = 'StandardSQL') -> 'SyntaxTree':
+    def sqlptree(cls, sql: str, is_abstract: bool = False, sql_type: str = 'StandardSQL') -> 'SyntaxTree':
         """Returns SyntaxTree by parsing sql statement.
 
         Args:
-            stmt: sql statemtnt
+            sql: sql statemtnt
             is_abstract: If this is True, this tree is constructed abstractly.
                           Abstract tree ignores whitespaces, comments and blank lines.
             sql_type: target sql type (StandardSQL only now)
@@ -235,7 +235,7 @@ class SyntaxTree:
         if sql_type != 'StandardSQL':
             raise NotImplementedError(f'this linter can parses only "StandardSQL" right now, but {sql_type}')
 
-        token_list: List[List[Token]] = parse_sql(stmt)
+        token_list: List[List[Token]] = parse_sql(sql)
 
         # creates empty syntax tree as guard
         parent_vertex = SyntaxTree(depth=0, line_num=0, is_abstract=is_abstract)
@@ -284,16 +284,16 @@ class SyntaxTree:
 
         return result
 
-    def stmtftree(self) -> str:
+    def sqlftree(self) -> str:
         """Returns sql statement
 
         Returns:
             sql stetement
         """
-        return SyntaxTree._stmtftree(self)
+        return SyntaxTree._sqlftree(self)
 
     @staticmethod
-    def _stmtftree(tree: 'SyntaxTree') -> str:
+    def _sqlftree(tree: 'SyntaxTree') -> str:
         """Returns sql statement
 
         Returns:
@@ -307,7 +307,7 @@ class SyntaxTree:
             else:
                 result = f'{result}\n{leaf.text}'
 
-            appendix = SyntaxTree._stmtftree(leaf)
+            appendix = SyntaxTree._sqlftree(leaf)
             if len(appendix) > 0:
                 result = f'{result}\n{appendix}'
 

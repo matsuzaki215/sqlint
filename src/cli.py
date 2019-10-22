@@ -52,17 +52,18 @@ def main(files, config_file, is_format):
         with open(f, 'r') as fp:
             if is_format:
                 # constructs syntax tree
-                trees[f] = SyntaxTree.stmtptree(fp.read(), is_abstract=True)
+                trees[f] = SyntaxTree.sqlptree(fp.read(), is_abstract=True)
             else:
-                trees[f] = SyntaxTree.stmtptree(fp.read())
+                trees[f] = SyntaxTree.sqlptree(fp.read())
 
                 logger.debug(trees[f])
 
     for file, tree in trees.items():
         if is_format:
             formatted_tree = format_tree(tree, config)
-            logger.info(formatted_tree.stmtftree())
+            logger.info(formatted_tree.sqlftree())
         else:
+            tree.sqlftree()
             for v in check_tree(tree, config):
                 logger.info('{} {}'.format(file, v.get_message()))
 

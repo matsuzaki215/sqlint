@@ -106,15 +106,15 @@ class WhiteSpacesFormatter(Formatter):
         for idx, token in enumerate(tokens):
             result.append(token)
 
-            # next of "(", functions, or whitespaces must not be WHITESPACE
-            if (token.kind in [Token.BRACKET_LEFT, Token.WHITESPACE, Token.FUNCTION]) or \
+            # next of (, functions, or whitespaces must not be WHITESPACE
+            if (token.kind in [Token.DOT, Token.BRACKET_LEFT, Token.WHITESPACE, Token.FUNCTION]) or \
                (idx >= len(tokens) - 1):
                 continue
 
             next_tokens = tokens[idx + 1]
             # previoues of comma or ) must not be WHITESPACE
             # user function maybe
-            if (next_tokens.kind in [Token.COMMA, Token.BRACKET_RIGHT]) or \
+            if (next_tokens.kind in [Token.COMMA, Token.DOT, Token.BRACKET_RIGHT]) or \
                (token.kind == Token.IDENTIFIER and next_tokens.kind == Token.BRACKET_LEFT):
                 continue
 
@@ -139,7 +139,6 @@ class BlankLineFormatter(Formatter):
         if tree.depth != 0:
             return
 
-        rb_token = Token(word=')', kind=Token.BRACKET_RIGHT)
         with_token = Token(word='WITH', kind=Token.KEYWORD)
         comma_token = Token(word=',', kind=Token.COMMA)
         index = 0
@@ -153,7 +152,7 @@ class BlankLineFormatter(Formatter):
             tokens = leaf.tokens
 
             try:
-                if (tokens[0] == rb_token) or \
+                if (tokens[0].kind == Token.BRACKET_RIGHT) or \
                    (tokens[0].kind == Token.IDENTIFIER) or \
                    (tokens[0] in [with_token, comma_token] and len(tokens) == 2):
                     tree.insert_leaf(index+1, SyntaxTree(depth=1, line_num=0))  # line num will be re-Numbered
@@ -162,5 +161,3 @@ class BlankLineFormatter(Formatter):
                 # tokens index out of range
                 pass
             index += 1
-
-

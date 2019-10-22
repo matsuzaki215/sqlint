@@ -127,8 +127,8 @@ class CommaChecker(Checker):
                 comma_indexes = [i for i in comma_indexes if i != len(tokens)-1]
 
             for idx in comma_indexes:
-                # If a comma is in brackets, it is appropriate not to break a line at comma.
-                # So determines that by counting left- and right- brackets at left-right-side.
+                # If a comma is in brackets, it is appropriate not to break a line at the comma.
+                # Determines that by counting left- and right- brackets at left-right-side.
                 is_open_bracket = 0 < (tokens[0:idx].count(lb) - tokens[0:idx].count(rb))
                 is_close_bracket = 0 < (tokens[idx+1:].count(rb) - tokens[idx+1:].count(lb))
 

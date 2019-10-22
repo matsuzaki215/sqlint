@@ -6,6 +6,7 @@ from . import pattern
 from .token import Token
 
 
+# TODO: Parses sql to Tree directory
 def parse(stmt: str) -> List[List[Token]]:
     """ Parses full sql statement to list of some tokens.
 
@@ -101,18 +102,19 @@ def _tokenize_comment_single(text: str) -> Tuple[str, List[Token]]:
     return text, []
 
 
-def _tokenize_bilateral(text: str, token: str, ptn: Pattern) -> Tuple[str, List[Token]]:
+def _tokenize_multi(text: str, kinds: List[str], ptn: Pattern) -> Tuple[str, List[Token]]:
     """TODO: Describes doc string """
 
     tokens: List[Token] = []
 
     match = re.match(ptn, text)
     if match:
-        if len(match.group(1)) > 0:
-            tokens.append(Token(match.group(1), Token.WHITESPACE))
-        tokens.append(Token(match.group(2), token))
-        if len(match.group(3)) > 0:
-            tokens.append(Token(match.group(3), Token.WHITESPACE))
+        for idx, token_kind in enumerate(kinds):
+            if len(match.group(idx+1)) > 0:
+                tokens.append(Token(match.group(idx+1), token_kind))
+            # tokens.append(Token(match.group(2), token))
+            # if len(match.group(3)) > 0:
+            #    tokens.append(Token(match.group(3), Token.WHITESPACE))
 
         return text[match.end():], tokens
 
@@ -129,10 +131,13 @@ def _tokenize_keyword(text: str, token: str, ptn: Pattern) -> Tuple[str, List[To
         if len(match.group(1)) > 0:
             tokens.append(Token(match.group(1), Token.WHITESPACE))
         tokens.append(Token(match.group(2), token))
-        if match.group(3) == '(':
-            tokens.append(Token(match.group(3), Token.BRACKET_LEFT))
-        elif len(match.group(3)) > 0:
-            tokens.append(Token(match.group(3), Token.WHITESPACE))
+
+        # spilit this pattern -> (\s+|\s*\(?\s*\*?|$)
+        _, tks = _tokenize_multi(
+            text=match.group(3),
+            kinds=[Token.WHITESPACE, Token.BRACKET_LEFT, Token.WHITESPACE, Token.KEYWORD],
+            ptn=re.compile(r'(\s*)(\(?)(\s*)(\*?)'))
+        tokens.extend(tks)
 
         return text[match.end():], tokens
 
@@ -150,6 +155,18 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
         tokens list
     """
     tokens: List[Token] = []
+
+    tokneizer_list_before_keyword = {
+        pattern.COMMA: [Token.WHITESPACE, Token.COMMA, Token.WHITESPACE],
+        pattern.DOT: [Token.WHITESPACE, Token.DOT, Token.KEYWORD, Token.WHITESPACE],
+        pattern.BRACKET_LEFT: [Token.WHITESPACE, Token.BRACKET_LEFT, Token.WHITESPACE],
+        pattern.BRACKET_RIGHT: [Token.WHITESPACE, Token.BRACKET_RIGHT, Token.WHITESPACE],
+    }
+    tokneizer_list_after_keyword = {
+        pattern.OPERATOR: [Token.WHITESPACE, Token.OPERATOR, Token.WHITESPACE],
+        pattern.QUOTES: [Token.WHITESPACE, Token.IDENTIFIER, Token.WHITESPACE],
+        pattern.IDENTIFIER: [Token.WHITESPACE, Token.IDENTIFIER, Token.WHITESPACE]
+    }
 
     # check multi-line comment : /* comment */
     while len(text) > 0:
@@ -172,22 +189,15 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
         if matches:
             continue
 
-        # comma
-        text, matches = _tokenize_bilateral(text, token=Token.COMMA, ptn=pattern.COMMA)
-        tokens.extend(matches)
-        if matches:
-            continue
-
-        # bracket_left
-        text, matches = _tokenize_bilateral(text, token=Token.BRACKET_LEFT, ptn=pattern.BRACKET_LEFT)
-        tokens.extend(matches)
-        if matches:
-            continue
-
-        # bracket_right
-        text, matches = _tokenize_bilateral(text, token=Token.BRACKET_RIGHT, ptn=pattern.BRACKET_RIGHT)
-        tokens.extend(matches)
-        if matches:
+        # comma, dot, brackets
+        is_matched = False
+        for ptn, kinds in tokneizer_list_before_keyword.items():
+            text, matches = _tokenize_multi(text, kinds=kinds, ptn=ptn)
+            tokens.extend(matches)
+            if matches:
+                is_matched = True
+                break
+        if is_matched:
             continue
 
         # keywords
@@ -203,22 +213,15 @@ def _tokenize(text: str, is_comment_line: bool = False) -> Tuple[List[Token], bo
         if matches:
             continue
 
-        # operator
-        text, matches = _tokenize_bilateral(text, token=Token.OPERATOR, ptn=pattern.OPERATOR)
-        tokens.extend(matches)
-        if matches:
-            continue
-
-        # quotes: "hoge", 'fuga', `piyo` as identifier
-        text, matches = _tokenize_bilateral(text, token=Token.IDENTIFIER, ptn=pattern.QUOTES)
-        tokens.extend(matches)
-        if matches:
-            continue
-
-        # others are identifier
-        text, matches = _tokenize_bilateral(text, token=Token.IDENTIFIER, ptn=pattern.IDENTIFIER)
-        tokens.extend(matches)
-        if matches:
+        # operators, quotes, identifier
+        is_matched = False
+        for ptn, kinds in tokneizer_list_after_keyword.items():
+            text, matches = _tokenize_multi(text, kinds=kinds, ptn=ptn)
+            tokens.extend(matches)
+            if matches:
+                is_matched = True
+                break
+        if is_matched:
             continue
 
         # blank
