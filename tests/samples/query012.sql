@@ -1,6 +1,7 @@
 select
-    count(*)
-    , test_table.*
-    , (2 * 3) as x
+    a
+    ,b
 from
-    `test_table` as t1
+    test_table as t1
+where
+    a in (1 ,2, 3)

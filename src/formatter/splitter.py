@@ -7,15 +7,16 @@ from src.syntax_tree import SyntaxTree
 T = TypeVar('T')
 
 
-class Grouper(metaclass=ABCMeta):
+class Splitter(metaclass=ABCMeta):
     @abstractmethod
-    def group(self, tokens: List[T], tree: SyntaxTree) -> Tuple[List[T], List[List[T]], List[T]]:
+    def split(self, tokens: List[T], tree: SyntaxTree) -> Tuple[List[T], List[List[T]], List[T]]:
         raise NotImplementedError()
 
     @classmethod
-    def group_other(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+    def split_other(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """"""
         bracket_count = 0
-        for idx, token in enumerate(tokens[1:]):
+        for idx, token in enumerate(tokens):
             bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
             bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
 
@@ -25,9 +26,9 @@ class Grouper(metaclass=ABCMeta):
         return tokens, [], []
 
 
-class IdentifierGrouper(Grouper):
+class IdentifierSplitter(Splitter):
     @classmethod
-    def group(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+    def split(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
         parent_tree = tree.parent
 
         if parent_tree is None or parent_tree.depth == 0:
@@ -37,12 +38,12 @@ class IdentifierGrouper(Grouper):
         # if parent tree is "FROM" sequence, explores "JOIN" sequences.
         from_token = Token(word='FROM', kind=Token.KEYWORD)
         if parent_tree.tokens[0] == from_token:
-            return cls.group_from(tokens)
+            return cls.split_from(tokens)
 
-        return cls.group_other(tokens)
+        return cls.split_other(tokens)
 
     @classmethod
-    def group_from(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+    def split_from(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
         join_tokens = [
             Token(word='INNER', kind=Token.KEYWORD),
             Token(word='LEFT', kind=Token.KEYWORD),
@@ -60,44 +61,80 @@ class IdentifierGrouper(Grouper):
             if token in join_tokens and bracket_count == 0:
                 return tokens[0:idx], [], tokens[idx:]
 
-        return cls.group_other(tokens)
+        return cls.split_other(tokens)
 
 
-class RightBrackerGrouper(Grouper):
+class RightBrackerSplitter(Splitter):
     @classmethod
-    def group(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+    def split(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
         if len(tokens) >= 2 and tokens[1].word == ';':
             return tokens[0:2], [], tokens[2:]
 
-        return tokens[0:1], [], tokens[1:]
+        if tree.depth <= 1:
+            return tokens[0:1], [], tokens[1:]
+
+        return tokens[0:], [], []
 
 
-class LongLineGrouper(Grouper):
+class LongLineSplitter(Splitter):
     @classmethod
-    def group(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        bracket_count = 0
-        left_index = 0
-        for idx, token in enumerate(tokens):
-            if token.kind == Token.BRACKET_LEFT:
-                if left_index == 0:
-                    left_index = idx
-                bracket_count += 1
+    def split(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        if tokens[0].word.upper() == 'WHEN':
+            return cls._split_when(tokens)
 
-            if token.kind == Token.BRACKET_RIGHT:
-                if bracket_count == 1:
-                    return tokens[0:left_index+1], [tokens[left_index+1:idx]], tokens[idx:]
-                bracket_count -= 1
+        return cls._split(tokens)
+
+    @classmethod
+    def _split(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        lb_token = Token(word='(', kind=Token.BRACKET_LEFT)
+        try:
+            left_index = tokens.index(lb_token)
+        except ValueError:
+            # Not Found left bracket, can't split the line
+            return tokens, [], []
+
+        bracket_count = 1
+        for idx, token in enumerate(tokens[left_index+1:]):
+            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
+            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
+
+            if bracket_count == 0:
+                return (
+                    tokens[0:left_index+1],
+                    KeywordSelectSplitter.split_leaves(tokens[left_index+1:idx+left_index+1]),
+                    # [tokens[left_index+1:idx+left_index+1]],
+                    tokens[idx+left_index+1:]
+                )
 
         return tokens, [], []
 
-
-class CommaGrouper(Grouper):
     @classmethod
-    def group(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+    def _split_when(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Case - when"""
+
+        then_token = Token(word='THEN', kind=Token.KEYWORD)
+
+        bracket_count = 0
+        for idx, token in enumerate(tokens):
+            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
+            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
+
+            if token == then_token and bracket_count == 0:
+                return (
+                    tokens[0:idx+1],
+                    KeywordWhereSplitter.split_condiction(tokens[idx+1:]),
+                    [])
+
+        raise ValueError('"THEN" is requires one or more "WHEN" sequense')
+
+
+class CommaSplitter(Splitter):
+    @classmethod
+    def split(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
         parent_tree = tree.parent
         bracket_count = 0
 
-        # TODO: implement following as Grouper and merges WITH-Grouper
+        # TODO: implement following as Splitter and merges WITH-Splitter
         if parent_tree.depth == 0:
             # maybe this comma correspands to WITH sequence
             # expected
@@ -108,18 +145,18 @@ class CommaGrouper(Grouper):
                 return tokens, [], []
 
             if tokens[0].kind != Token.COMMA:
-                raise ValueError('a head of tokens must be "," sequence.')
+                raise ValueError(f'a head of tokens must be "," sequence, but {tokens[0]}')
 
             if tokens[1].kind != Token.IDENTIFIER:
                 # TODO: raises SQL error or check this as Violations
-                raise ValueError('next of "WITH" or "," must be identifier')
+                raise ValueError(f'next of "WITH" or "," must be identifier, but {tokens[1]}')
 
             if tokens[2] != as_token:
                 return tokens[0:2], [], tokens[2:]
 
             if tokens[3].kind != Token.BRACKET_LEFT:
                 # TODO: raises SQL error or check this as Violations
-                raise ValueError('next of "AS" must be "(" in "WITH" or "," sequence.')
+                raise ValueError(f'next of "AS" must be "(" in "WITH" or "," sequence, but {tokens[3]}')
 
             # Explores tokens until branch is closed
             bracket_count = 1
@@ -132,39 +169,40 @@ class CommaGrouper(Grouper):
 
             return tokens[0:1], [], tokens[1:]
 
+        # Explores next COMMA
         for idx, token in enumerate(tokens[1:]):
             bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
             bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
 
-            if bracket_count == 0 and token.kind == Token.COMMA:
+            if token.kind == Token.COMMA and bracket_count == 0:
                 return tokens[0:idx + 1], [], tokens[idx + 1:]
 
         return tokens, [], []
 
 
-class KeywordGrouper(Grouper):
+class KeywordSplitter(Splitter):
     @classmethod
-    def group(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+    def split(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
         head = tokens[0]
 
         if head.kind not in [Token.KEYWORD, Token.FUNCTION]:
             raise ValueError(f'token kind must be reserved KEYWORD or FUNCTION, but {head.kind}')
 
         key_functions = [
-            (['CREATE'], cls._group_create),
-            (['RETURNS'], cls._group_returns),
-            (['LANGUAGE'], cls._group_language),
-            (['AS'], cls._group_as),
-            (['WITH'], cls._group_with),
-            (['SELECT'], cls._group_select),
-            (['FROM'], cls._group_from),
-            (['WHERE'], KeywordWhereGrouper.group_where),
-            (['ORDER'], cls._group_order),
-            (['GROUP'], cls._group_group),
-            (['HAVING'], cls._group_having),
-            (['CASE'], cls._group_case),
-            (['WHEN'], cls._group_when),
-            (['INNER', 'LEFT', 'RIGHT', 'CROSS', 'OUTER', 'JOIN'], KeywordJoinGrouper.group_join),
+            (['CREATE'], cls._split_create),
+            (['RETURNS'], cls._split_returns),
+            (['LANGUAGE'], cls._split_language),
+            (['AS'], cls._split_as),
+            (['WITH'], cls._split_with),
+            (['SELECT'], KeywordSelectSplitter.split_select),
+            (['FROM'], cls._split_from),
+            (['WHERE'], KeywordWhereSplitter.split_where),
+            (['ORDER'], cls._split_order),
+            (['GROUP'], cls._split_split),
+            (['HAVING'], cls._split_having),
+            (['CASE'], cls._split_case),
+            (['WHEN'], cls._split_when),
+            (['INNER', 'LEFT', 'RIGHT', 'CROSS', 'OUTER', 'JOIN'], KeywordJoinSplitter.split_join),
         ]
 
         word = head.word.upper()
@@ -177,7 +215,7 @@ class KeywordGrouper(Grouper):
         return tokens, [], []
 
     @classmethod
-    def _group_create(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+    def _split_create(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
         stoppers = [
             Token(word='RETURNS', kind=Token.KEYWORD),
             Token(word='LANGUAGE', kind=Token.KEYWORD),
@@ -194,7 +232,7 @@ class KeywordGrouper(Grouper):
         return tokens[0:1], [], tokens[1:]
 
     @classmethod
-    def _group_returns(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+    def _split_returns(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
         stoppers = [
             Token(word='LANGUAGE', kind=Token.KEYWORD),
             Token(word='AS', kind=Token.KEYWORD),
@@ -210,7 +248,7 @@ class KeywordGrouper(Grouper):
         return tokens[0:1], [], tokens[1:]
 
     @classmethod
-    def _group_language(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+    def _split_language(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
         stoppers = [
             Token(word='AS', kind=Token.KEYWORD),
         ]
@@ -225,7 +263,7 @@ class KeywordGrouper(Grouper):
         return tokens[0:1], [], tokens[1:]
 
     @classmethod
-    def _group_as(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+    def _split_as(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
         if len(tokens) <= 2:
             return tokens, [], []
 
@@ -244,8 +282,8 @@ class KeywordGrouper(Grouper):
         return tokens[0:2], [], tokens[2:]
 
     @classmethod
-    def _group_with(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Groups WITH sequence
+    def _split_with(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits WITH sequence
 
         Examples:
         pattern.1
@@ -271,16 +309,20 @@ class KeywordGrouper(Grouper):
         if len(tokens) <= 2:
             return tokens, [], []
 
+        # TODO: Modify parser to soloved this mis-labbeling
+        if tokens[1].kind in [Token.KEYWORD, Token.FUNCTION]:
+            tokens[1].kind = Token.IDENTIFIER
+
         if tokens[1].kind != Token.IDENTIFIER:
             # TODO: raises SQL error or check this as Violations
-            raise ValueError('next of "WITH" must be identifier')
+            raise ValueError(f'next of "WITH" must be identifier, but {tokens[1]}')
 
         if tokens[2] != as_token:
             return tokens[0:2], [], tokens[2:]
 
         if tokens[3].kind != Token.BRACKET_LEFT:
             # TODO: raises SQL error or check this as Violations
-            raise ValueError('next of "AS" must be "(" in "WITH" sequence.')
+            raise ValueError(f'next of "AS" must be "(" in "WITH" sequence, but {tokens[3]}')
 
         # Explores tokens until branch is closed
         bracket_count = 1
@@ -294,8 +336,171 @@ class KeywordGrouper(Grouper):
         return tokens[0:1], [tokens[1:]], []
 
     @classmethod
-    def _group_select(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Groups Select sequence
+    def _split_from(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits FROM sequence
+
+        Args:
+            tokens:
+
+        Returns:
+
+        """
+
+        from_token = Token(word='FROM', kind=Token.KEYWORD)
+        stoppers = [
+            Token(word='SELECT', kind=Token.KEYWORD),
+            Token(word='WHERE', kind=Token.KEYWORD),
+            Token(word='ORDER', kind=Token.KEYWORD),
+            Token(word='GROUP', kind=Token.KEYWORD),
+            Token(word='HAVING', kind=Token.KEYWORD),
+        ]
+
+        # Explores tokens until FROM is closed by condition sequence corresponding it.
+        from_count = 1
+        bracket_count = 0
+        for idx, token in enumerate(tokens[1:]):
+            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
+            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
+
+            if token == from_token and bracket_count == 0:
+                from_count += 1
+
+            if token in stoppers and from_count == 1 and bracket_count == 0:
+                if tokens[1].kind == Token.BRACKET_LEFT:
+                    return tokens[0:2], [tokens[2:idx+1]], tokens[idx+1:]
+                else:
+                    return tokens[0:1], [tokens[1:idx + 1]], tokens[idx + 1:]
+
+        return tokens[0:1], [tokens[1:]], []
+
+    @classmethod
+    def _split_split(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits GROIP BY sequence
+
+        Args:
+            tokens:
+
+        Returns:
+
+        """
+        return tokens[0:2], [tokens[2:]], []
+
+    @classmethod
+    def _split_order(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits ORDER BY sequence
+
+        Args:
+            tokens:
+
+        Returns:
+
+        """
+        return tokens[0:2], [tokens[2:]], []
+
+    @classmethod
+    def _split_having(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits ORDER BY sequence
+
+        Args:
+            tokens:
+
+        Returns:
+
+        """
+        return tokens[0:1], [tokens[1:]], []
+
+    @classmethod
+    def _split_case(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits WHEN sequence
+
+        Args:
+            tokens:
+
+        Returns:
+
+        """
+
+        case_token = Token(word='CASE', kind=Token.KEYWORD)
+        when_token = Token(word='WHEN', kind=Token.KEYWORD)
+        end_token = Token(word='END', kind=Token.KEYWORD)
+
+        try:
+            when_index = tokens.index(when_token)
+        except ValueError:
+            # TODO: raises SQL error or check this as Violations
+            raise ValueError('"CASE" sequence requires one or more "WHEN" sequense')
+
+        bracket_count = 0
+        case_count = 1
+        for idx, token in enumerate(tokens[when_index:]):
+            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
+            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
+
+            if token == case_token and bracket_count == 0:
+                case_count += 1
+            if token == end_token and case_count == 1 and bracket_count == 0:
+                return tokens[0:when_index], [tokens[when_index:idx+when_index]], tokens[idx+when_index:]
+
+        return tokens[0:when_index], [tokens[when_index:]], []
+
+    @classmethod
+    def _split_when(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits WHEN sequence
+
+        Args:
+            tokens:
+
+        Returns:
+
+        """
+
+        case_token = Token(word='CASE', kind=Token.KEYWORD)
+        when_token = Token(word='WHEN', kind=Token.KEYWORD)
+        end_token = Token(word='END', kind=Token.KEYWORD)
+
+        bracket_count = 0
+        case_count = 1
+        for idx, token in enumerate(tokens[1:]):
+            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
+            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
+
+            if bracket_count == 0:
+                case_count += (1 if token == case_token else 0)
+                case_count += (-1 if token == end_token else 0)
+
+            if token == when_token and case_count <= 1 and bracket_count == 0:
+                return tokens[0:idx+1], [], tokens[idx+1:]
+
+        return tokens, [], []
+
+    @classmethod
+    def split_leaves(cls, tokens: List[Token]) -> List[List[Token]]:
+        """Splits leaves of Select sequence
+        """
+
+        result = []
+
+        bracket_count = 0
+        start = 0
+        for idx, token in enumerate(tokens):
+            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
+            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
+
+            if token.kind == Token.COMMA and bracket_count == 0:
+                result.append(tokens[start:idx + 1])
+                start = idx + 1
+
+        if start < len(tokens):
+            result.append(tokens[start:len(tokens)])
+
+        # return [tokens]
+        return result
+
+
+class KeywordSelectSplitter(KeywordSplitter):
+    @classmethod
+    def split_select(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits Select sequence
 
         Examples:
         ---
@@ -332,155 +537,18 @@ class KeywordGrouper(Grouper):
             if token == select_token and bracket_count == 0:
                 select_count += 1
             if token in stoppers and select_count == 1 and bracket_count == 0:
-                return tokens[0:1], [tokens[1:idx+1]], tokens[idx+1:]
+                return (
+                    tokens[0:1],
+                    cls.split_leaves(tokens[1:idx+1]),
+                    tokens[idx+1:])
 
         return tokens[0:1], [tokens[1:]], []
 
+
+class KeywordWhereSplitter(KeywordSplitter):
     @classmethod
-    def _group_from(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Groups FROM sequence
-
-        Args:
-            tokens:
-
-        Returns:
-
-        """
-
-        from_token = Token(word='FROM', kind=Token.KEYWORD)
-        stoppers = [
-            Token(word='SELECT', kind=Token.KEYWORD),
-            Token(word='WHERE', kind=Token.KEYWORD),
-            Token(word='ORDER', kind=Token.KEYWORD),
-            Token(word='GROUP', kind=Token.KEYWORD),
-            Token(word='HAVING', kind=Token.KEYWORD),
-        ]
-
-        # Explores tokens until FROM is closed by condition sequence corresponding it.
-        from_count = 1
-        bracket_count = 0
-        for idx, token in enumerate(tokens[1:]):
-            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
-            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
-
-            if token == from_token and bracket_count == 0:
-                from_count += 1
-
-            if token in stoppers and from_count == 1 and bracket_count == 0:
-                if tokens[1].kind != Token.BRACKET_LEFT:
-                    return tokens[0:1], [tokens[1:idx+1]], tokens[idx+1:]
-                else:
-                    return tokens[0:2], [tokens[2:idx+1]], tokens[idx + 1:]
-
-        return tokens[0:1], [tokens[1:]], []
-
-    @classmethod
-    def _group_group(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Groups GROIP BY sequence
-
-        Args:
-            tokens:
-
-        Returns:
-
-        """
-        return tokens[0:2], [tokens[2:]], []
-
-    @classmethod
-    def _group_order(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Groups ORDER BY sequence
-
-        Args:
-            tokens:
-
-        Returns:
-
-        """
-        return tokens[0:2], [tokens[2:]], []
-
-    @classmethod
-    def _group_having(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Groups ORDER BY sequence
-
-        Args:
-            tokens:
-
-        Returns:
-
-        """
-        return tokens[0:1], [tokens[1:]], []
-
-    @classmethod
-    def _group_case(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Groups WHEN sequence
-
-        Args:
-            tokens:
-
-        Returns:
-
-        """
-
-        case_token = Token(word='CASE', kind=Token.KEYWORD)
-        when_token = Token(word='WHEN', kind=Token.KEYWORD)
-        end_token = Token(word='END', kind=Token.KEYWORD)
-
-        if tokens[1].kind != Token.IDENTIFIER:
-            # TODO: raises SQL error or check this as Violations
-            raise ValueError('next of "CASE" must be identifier')
-
-        if tokens[2] != when_token:
-            # TODO: raises SQL error or check this as Violations
-            raise ValueError('"CASE" sequence requires one or more "WHEN" sequense')
-
-        bracket_count = 0
-        case_count = 1
-        for idx, token in enumerate(tokens[2:]):
-            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
-            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
-
-            if token == case_token and bracket_count == 0:
-                case_count += 1
-            if token == end_token and case_count == 1 and bracket_count == 0:
-                return tokens[0:2], [tokens[2:idx+2]], tokens[idx+2:]
-
-        return tokens[0:2], [tokens[2:]], []
-
-    @classmethod
-    def _group_when(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Groups WHEN sequence
-
-        Args:
-            tokens:
-
-        Returns:
-
-        """
-
-        case_token = Token(word='CASE', kind=Token.KEYWORD)
-        when_token = Token(word='WHEN', kind=Token.KEYWORD)
-        end_token = Token(word='END', kind=Token.KEYWORD)
-
-        bracket_count = 0
-        case_count = 1
-        for idx, token in enumerate(tokens[1:]):
-            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
-            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
-
-            if bracket_count == 0:
-                case_count += (1 if token == case_token else 0)
-                case_count += (-1 if token == end_token else 0)
-
-            if token == when_token and case_count <= 1 and bracket_count == 0:
-                return tokens[0:idx+1], [], tokens[idx+1:]
-
-        return tokens, [], []
-
-
-class KeywordWhereGrouper(KeywordGrouper):
-    @classmethod
-    def group_where(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Groups WHERE sequence
+    def split_where(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits WHERE sequence
 
         Args:
             tokens:
@@ -510,14 +578,14 @@ class KeywordWhereGrouper(KeywordGrouper):
             if token in stoppers and where_count == 1 and bracket_count == 0:
                 return (
                     tokens[0:1],
-                    cls.group_condiction(tokens[1:idx]),
-                    tokens[idx:])
+                    cls.split_condiction(tokens[1:idx+1]),
+                    tokens[idx+1:])
 
-        return tokens[0:1], cls.group_condiction(tokens[1:]), []
+        return tokens[0:1], cls.split_condiction(tokens[1:]), []
 
     @classmethod
-    def group_condiction(cls, tokens: List[Token]) -> List[List[Token]]:
-        """Groups ON or USING sequence
+    def split_condiction(cls, tokens: List[Token]) -> List[List[Token]]:
+        """Splits ON or USING sequence
 
         Args:
             tokens:
@@ -526,12 +594,15 @@ class KeywordWhereGrouper(KeywordGrouper):
 
         """
 
+        case_token = Token(word='CASE', kind=Token.KEYWORD)
+        end_token = Token(word='END', kind=Token.KEYWORD)
         and_token = Token(word='AND', kind=Token.KEYWORD)
         or_token = Token(word='OR', kind=Token.KEYWORD)
         between_tokens = Token(word='BETWEEN', kind=Token.KEYWORD)
 
         result = []
 
+        case_count = 0
         between_count = 0
         bracket_count = 0
         start = 0
@@ -541,11 +612,14 @@ class KeywordWhereGrouper(KeywordGrouper):
             if bracket_count > 0:
                 continue
 
-            if token.kind == Token.COMMENT:
+            if token.kind == Token.COMMENT and case_count == 0:
                 result.append(tokens[start:idx])
                 result.append(tokens[idx:idx+1])
                 start = idx+1
                 continue
+
+            case_count += (1 if token == case_token else 0)
+            case_count += (-1 if token == end_token else 0)
 
             if token == between_tokens:
                 between_count += 1
@@ -554,7 +628,7 @@ class KeywordWhereGrouper(KeywordGrouper):
                 between_count -= between_count
                 continue
 
-            if token in [and_token, or_token] and between_count == 0:
+            if token in [and_token, or_token] and case_count == 0 and between_count == 0:
                 result.append(tokens[start:idx])
                 start = idx
 
@@ -564,10 +638,10 @@ class KeywordWhereGrouper(KeywordGrouper):
         return result
 
 
-class KeywordJoinGrouper(KeywordGrouper):
+class KeywordJoinSplitter(KeywordSplitter):
     @classmethod
-    def group_join(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Groups WHEN sequence
+    def split_join(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits WHEN sequence
 
         Args:
             tokens:
@@ -611,14 +685,14 @@ class KeywordJoinGrouper(KeywordGrouper):
         if condition_index != -1:
             return (
                 tokens[0:condition_index],
-                cls._group_condiction(tokens[condition_index:next_join_index]),
+                cls._split_condiction(tokens[condition_index:next_join_index]),
                 tokens[next_join_index:])
 
         return tokens[0:next_join_index], [], tokens[next_join_index:]
 
     @classmethod
-    def _group_condiction(cls, tokens: List[Token]) -> List[List[Token]]:
-        """Groups ON or USING sequence
+    def _split_condiction(cls, tokens: List[Token]) -> List[List[Token]]:
+        """Splits ON or USING sequence
 
         Args:
             tokens:
@@ -627,9 +701,9 @@ class KeywordJoinGrouper(KeywordGrouper):
 
         """
 
-        # if tokens[0].word.upper() == 'USING', no need grouping maybe
+        # if tokens[0].word.upper() == 'USING', no need spliting maybe
         # TODO: confirms whether overlooking other cases.
         if tokens[0].word.upper() != 'ON':
             return [tokens]
 
-        return KeywordWhereGrouper.group_condiction(tokens)
+        return KeywordWhereSplitter.split_condiction(tokens)

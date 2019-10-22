@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from . import grouper as grp
+from . import splitter as spt
 from . import formatter as fmt
 from src.syntax_tree import SyntaxTree
 from src.parser import Token
@@ -61,29 +61,35 @@ def _gather_tokens(tree: SyntaxTree) -> List[Token]:
 
 
 def _reshape_tree(tree: SyntaxTree, config: Config):
-    parent, children, sibling = _split_tokens(tree)
-
-    """ DEBUG:
-    if parent and parent[0].word.lower() == 'when':
-        print('-'*10)
-        print(f'parent = {parent}')
-        print(f'children = {children}')
-        print(f'sibling = {sibling}')
-        print('-'*10)
-    """
-
+    own, children, sibling = _split_tokens(tree)
     siblings = [sibling]
 
-    tree.tokens = parent
+    """DEBUG
+    if own and own[0].word.lower() == 'date_diff':
+        print('-'*10)
+        print(f'\033[32mown\033[0m = {own}')
+        print(f'\033[32mchildren\033[0m = {children}')
+        print(f'\033[32msibling\033[0m = {sibling}')
+        print('-'*10)
+    """
+    tree.tokens = own
 
     # checks tokens(line) length
-    tokens_and_spaces = fmt.WhiteSpacesFormatter.format_tokens(parent)
+    tokens_and_spaces = fmt.WhiteSpacesFormatter.format_tokens(own)
     length = sum([len(tkn) for tkn in tokens_and_spaces]) + config.indent_steps*(tree.depth-1)
     max_length = config.max_line_length
 
     if length > max_length:
-        _p, _c, _s = grp.LongLineGrouper.group(parent, tree)
-        tree.tokens = _p
+        _o, _c, _s = spt.LongLineSplitter.split(own, tree)
+        """DEBUG
+        if own and own[0].word.lower() == 'date_diff':
+            print('+' * 10)
+            print(f'    \033[92m_o\033[0m = {_o}')
+            print(f'    \033[92m_c\033[0m = {_c}')
+            print(f'    \033[92m_s\033[0m = {_s}')
+            print('+' * 10)
+        """
+        tree.tokens = _o
         children = _c + children
         siblings.insert(0, _s)
 
@@ -125,17 +131,17 @@ def _split_tokens(tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], Lis
         return [], [], []
 
     if tokens[0].kind in [Token.KEYWORD, Token.FUNCTION]:
-        return grp.KeywordGrouper.group(tokens, tree)
+        return spt.KeywordSplitter.split(tokens, tree)
     elif tokens[0].kind == Token.COMMA:
-        return grp.CommaGrouper.group(tokens, tree)
+        return spt.CommaSplitter.split(tokens, tree)
     elif tokens[0].kind == Token.COMMENT:
         return tokens[0:1], [], tokens[1:]
     elif tokens[0].kind == Token.IDENTIFIER:
-        return grp.IdentifierGrouper.group(tokens, tree)
+        return spt.IdentifierSplitter.split(tokens, tree)
     elif tokens[0].kind in [Token.BRACKET_LEFT, Token.OPERATOR]:
-        return grp.Grouper.group_other(tokens)
+        return spt.Splitter.split_other(tokens)
     elif tokens[0].kind == Token.BRACKET_RIGHT:
-        return grp.RightBrackerGrouper.group(tokens, tree)
+        return spt.RightBrackerSplitter.split(tokens, tree)
     # ignores this case because this format method applies to abstract tree excluding whitespaces.
     # elif token.WHITESPACE:
 

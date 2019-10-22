@@ -1,27 +1,32 @@
 """
 BigQuery reserved keywords
-https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical?hl=ja#reserved-keywords
+ref) https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical?hl=ja#reserved-keywords
 
 Some keywords are used legacy-sql and these are replaced other functions in standard-sql
 ref) # https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-from-legacy-sql#function_comparison
 """
 RESERVED_KEYWORDS = [
     'ALL', 'AND', 'ANY', 'ARRAY', 'AS', 'ASC', 'ASSERT_ROWS_MODIFIED',
-    'AT', 'BETWEEN', 'BY', 'CASE', 'CAST', 'COLLATE', 'CONTAINS', 'CREATE',
+    'AT', 'BETWEEN', 'BY', 'CASE', 'COLLATE', 'CONTAINS', 'CREATE',
     'CROSS', 'CUBE', 'CURRENT', 'DEFAULT', 'DEFINE', 'DESC', 'DISTINCT',
     'ELSE', 'END', 'ENUM', 'ESCAPE', 'EXCEPT', 'EXCLUDE', 'EXISTS',
     'EXTRACT', 'FALSE', 'FETCH', 'FOLLOWING', 'FOR', 'FROM', 'FULL', 'GROUP',
-    'GROUPING', 'GROUPS', 'HASH', 'HAVING', 'IF', 'IGNORE', 'IN', 'INNER',
+    'GROUPING', 'GROUPS', 'HASH', 'HAVING', 'IGNORE', 'IN', 'INNER',
     'INTERSECT', 'INTERVAL', 'INTO', 'IS', 'JOIN', 'LATERAL', 'LEFT',
     'LIKE', 'LIMIT', 'LOOKUP', 'MERGE', 'NATURAL', 'NEW', 'NO', 'NOT',
     'NULL', 'NULLS', 'OF', 'ON', 'OR', 'ORDER', 'OUTER', 'OVER', 'PARTITION',
-    'PRECEDING', 'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT', 'RIGHT', 'ROLLUP',
-    'ROWS', 'SELECT', 'SET', 'SOME', 'STRUCT', 'TABLESAMPLE', 'THEN', 'TO',
-    'TREAT', 'TRUE', 'UNBOUNDED', 'UNION', 'UNNEST', 'USING', 'WHEN', 'WHERE',
+    'PRECEDING', 'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT', 'RIGHT',
+    'ROWS', 'SELECT', 'SET', 'SOME', 'STRßUCT', 'TABLESAMPLE', 'THEN', 'TO',
+    'TREAT', 'TRUE', 'UNBOUNDED', 'UNION', 'UNNEST', 'WHEN', 'WHERE',
     'WINDOW', 'WITH', 'WITHIN',
+    # scripting(beta)
+    # https://cloud.google.com/bigquery/docs/reference/standard-sql/scripting
+    'DECLEAR', 'BEGIN,', 'IF', 'LOOP', 'WHILE', 'BREAK', 'LEAVE', 'CONTINUE', 'ITERATE', 'RETURN', 'CALL'
     # BigQuery standard-sql user functions
     # https://cloud.google.com/bigquery/docs/reference/standard-sql/user-defined-functions
     'TEMP', 'TEMPORARY', 'RETURNS', 'LANGUAGE'
+    # Note: parses as funtions
+    # 'IF', 'ROLLUP', 'USING',
 ]
 # BigQuery standard-sql functions
 # https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators
@@ -76,8 +81,10 @@ RESERVED_FUNCTIONS = [
     # security-functions
     'SESSION_USER',
     # TODO: Supported. net-functions
-    # Customize: cast-functions
-    'TIMESTAMP', 'DATE', 'DATETIME'
+    # cast-functions
+    'DATE', 'DATETIME', 'TIME', 'TIMESTAMP', 'CAST'
+    # Keyword parsed as functoins
+    'IF', 'ROLLUP', 'USING',
 ]
 BINARY_OPERATORS_ESCAPED = [
     '=', '<', '>', '!',
