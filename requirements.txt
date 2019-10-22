@@ -1,1 +1,2 @@
-Click==7.0
+click==7.0
+configparser==4.0.2
