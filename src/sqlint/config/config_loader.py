@@ -28,8 +28,10 @@ logger = logging.getLogger(__name__)
 
 class ConfigLoader:
     def __init__(self, config_file: Optional[str] = DEFAULT_INI):
-        self.values = {}
+        if config_file is None:
+            config_file = DEFAULT_INI
 
+        self.values = {}
         if not os.path.exists(DEFAULT_INI):
             raise FileNotFoundError(f'default setting file is not found: {DEFAULT_INI}')
 
@@ -99,6 +101,9 @@ class ConfigLoader:
 
 class Config:
     def __init__(self, config_file: Optional[str] = DEFAULT_INI):
+        if config_file is None:
+            config_file = DEFAULT_INI
+
         self.loader: ConfigLoader = ConfigLoader(config_file)
 
     @property
