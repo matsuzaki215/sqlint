@@ -6,7 +6,7 @@ from .parser import parse as parse_sql
 from .checker import check as check_sql
 from .formatter import format as format_sql
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 __all__ = [
     'parse',
