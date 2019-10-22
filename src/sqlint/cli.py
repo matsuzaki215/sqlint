@@ -65,7 +65,7 @@ def main(files, config_file, is_format):
         else:
             tree.sqlftree()
             for v in check_tree(tree, config):
-                logger.info('{} {}'.format(file, v.get_message()))
+                logger.info('{} {}'.format(file, v))
 
 
 if __name__ == '__main__':

@@ -3,10 +3,10 @@ from typing import Dict, List, Tuple
 
 from . import violation
 from .violation import Violation
-from src.syntax_tree import SyntaxTree, Node
-from src.parser import Token
-from src.parser.keywords import format as format_keyword
-from src.config import Config
+from sqlint.config import Config
+from sqlint.syntax_tree import SyntaxTree, Node
+from sqlint.parser import Token
+from sqlint.parser.keywords import format as format_keyword
 
 
 class Checker(metaclass=ABCMeta):

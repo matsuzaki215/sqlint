@@ -20,37 +20,40 @@ except IOError:
     long_description = ''
 
 # read __init__
-with open(path.join(root_dir, 'src', '__init__.py')) as f:
+with open(path.join(root_dir, 'src/sqlint', '__init__.py')) as f:
     init_text = f.read()
     version = re.search(r'__version__\s*=\s*[\'\"](.+?)[\'\"]', init_text).group(1)
 assert version
 
 setup(
-    name='src',
+    name='sqlint',
     version=version,
-    license="MIT",
-    author='shigeru0215',
-    author_email='matsuzaki215@gmail.com',
-    url='https://github.com/shigeru0215/sqlint',
     description='Simple Sql Linter',
     long_description=long_description,
-    packages=find_packages(exclude=("tests",)),
-    test_suite='tests',
-    install_requires=_requirements(),
+    url='https://github.com/shigeru0215/sqlint',
+    author='shigeru0215',
+    author_email='matsuzaki215@gmail.com',
+    license="MIT",
     classifiers=[
-        # 'Development Status :: 5 - Production/Stable',
-        # 'License :: OSI Approved :: MIT License',
+        'Development Status :: 3 - Alpha',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: MIT License',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
-        'Topic :: Database',
-        'Topic :: Software Development :: Libraries :: Python Modules',
+        'Programming Language :: Python :: 3.7',
+        'Topic :: Software Development :: Quality Assurance',
+        'Topic :: Text Processing :: General',
     ],
+    packages=find_packages('src', exclude=['tests']),
+    package_dir={'': 'src'},
+    package_data={'': ['config/default.ini']},
+    test_suite='tests',
+    install_requires=_requirements(),
     entry_points={
         "console_scripts": [
-            'sqlint=src.__main__:main',
+            'sqlint=sqlint.__main__:main',
         ]
     }
 )

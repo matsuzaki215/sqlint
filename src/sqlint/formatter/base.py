@@ -1,10 +1,14 @@
+import logging
 from typing import List, Tuple
 
 from . import splitter as spt
 from . import formatter as fmt
-from src.syntax_tree import SyntaxTree
-from src.parser import Token
-from src.config import Config
+from sqlint.config import Config
+from sqlint.parser import Token
+from sqlint.syntax_tree import SyntaxTree
+
+
+logger = logging.getLogger(__name__)
 
 
 def format(tree: SyntaxTree, config: Config) -> SyntaxTree:
@@ -66,11 +70,9 @@ def _reshape_tree(tree: SyntaxTree, config: Config):
 
     """DEBUG
     if own and own[0].word.lower() == 'date_diff':
-        print('-'*10)
-        print(f'\033[32mown\033[0m = {own}')
-        print(f'\033[32mchildren\033[0m = {children}')
-        print(f'\033[32msibling\033[0m = {sibling}')
-        print('-'*10)
+        logger.debug(f'\033[32mown\033[0m = {own}')
+        logger.debug(f'\033[32mchildren\033[0m = {children}')
+        logger.debug(f'\033[32msibling\033[0m = {sibling}')
     """
     tree.tokens = own
 
@@ -83,11 +85,9 @@ def _reshape_tree(tree: SyntaxTree, config: Config):
         _o, _c, _s = spt.LongLineSplitter.split(own, tree)
         """DEBUG
         if own and own[0].word.lower() == 'date_diff':
-            print('+' * 10)
-            print(f'    \033[92m_o\033[0m = {_o}')
-            print(f'    \033[92m_c\033[0m = {_c}')
-            print(f'    \033[92m_s\033[0m = {_s}')
-            print('+' * 10)
+            logger.debug(f'    \033[92m_o\033[0m = {_o}')
+            logger.debug(f'    \033[92m_c\033[0m = {_c}')
+            logger.debug(f'    \033[92m_s\033[0m = {_s}')
         """
         tree.tokens = _o
         children = _c + children

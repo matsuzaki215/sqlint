@@ -1,10 +1,10 @@
 from abc import ABCMeta, abstractmethod
 from typing import List
 
-from src.config import Config
-from src.parser import Token
-from src.parser.keywords import format as format_keyword
-from src.syntax_tree import SyntaxTree
+from sqlint.config import Config
+from sqlint.parser import Token
+from sqlint.parser.keywords import format as format_keyword
+from sqlint.syntax_tree import SyntaxTree
 
 
 class Formatter(metaclass=ABCMeta):

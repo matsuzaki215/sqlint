@@ -1,8 +1,8 @@
 from typing import Dict
 from enum import Enum
 
-from src.parser import Token
-from src.syntax_tree import SyntaxTree
+from sqlint.parser import Token
+from sqlint.syntax_tree import SyntaxTree
 
 
 class Code(Enum):
@@ -65,7 +65,7 @@ class Violation:
         self.code: Code = code
         self.params: Dict = kwargs
 
-    def get_message(self):
+    def __str__(self):
         _template = '(L{line}, {pos}): ' + self.code.template
 
         return _template.format(

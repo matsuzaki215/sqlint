@@ -4,8 +4,6 @@ from typing import List, Optional
 from .parser import Token
 from .parser import parse as parse_sql
 
-logger = logging.getLogger(__name__)
-
 
 class Node:
     def __init__(self, line_num: int, tokens: List[Token] = None):
@@ -290,6 +288,7 @@ class SyntaxTree:
         Returns:
             sql stetement
         """
+
         return SyntaxTree._sqlftree(self)
 
     @staticmethod
