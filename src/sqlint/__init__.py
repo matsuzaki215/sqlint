@@ -35,7 +35,7 @@ def parse(sql: str):
 
 def check(sql: str):
     tree = SyntaxTree.sqlptree(sql)
-    for v in check_sql(tree, Config()):
+    for v in sorted(check_sql(tree, Config())):
         logger.info(v)
 
 
