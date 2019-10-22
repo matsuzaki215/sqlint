@@ -59,6 +59,7 @@ REPL
     >>> check(sql)
     ['(L1, 1): reserved keywords must be lower case: SELECT -> select', '(L1, 11): reserved keywords must be lower case: From -> from', '(L1, 26): too many spaces', '(L1, 49): whitespace must be after binary operator: >10']
     >>>
+    >>> format(sql)
     >>> select
     >>>     id
     >>> from
