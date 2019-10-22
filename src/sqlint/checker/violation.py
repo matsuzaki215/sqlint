@@ -24,8 +24,8 @@ class Code(Enum):
     KEYWORD_UPPER_HEAD = ('E402', 'a head of reserved keywords must be upper case: {actual} -> {expected}')
     KEYWORD_LOWER = ('E403', 'reserved keywords must be lower case: {actual} -> {expected}')
     # E5: Join Context
-    JOIN_TABLE = ('E501', 'table_name must be at the same line as join context')
-    JOIN_CONTEXT = ('E502', 'join context must be fully: {actual} -> {expected}')
+    JOIN_TABLE_NOT_EXISIT = ('E501', 'table_name must be at the same line as join context')
+    JOIN_CONTEXT_OMIT = ('E502', 'join context must be fully: {actual} -> {expected}')
     # E6: lines
     LINE_BlANK_MULTIPLE = ('E601', 'there are multiple blank lines')
     LINE_ONLY_WHITESPACE = ('E602', 'this line has only whitespace')
@@ -153,14 +153,14 @@ class WhitespaceViolation(Violation):
         super().__init__(tree, index, _code, **kwargs)
 
 
-class JoinTableViolation(Violation):
+class JoinTableNotExistViolation(Violation):
     def __init__(self, tree: SyntaxTree, index: int, **kwargs):
-        super().__init__(tree, index, Code.JOIN_TABLE, **kwargs)
+        super().__init__(tree, index, Code.JOIN_TABLE_NOT_EXISIT, **kwargs)
 
 
-class JoinContextViolation(Violation):
+class JoinContextOmitViolation(Violation):
     def __init__(self, tree: SyntaxTree, index: int, **kwargs):
-        super().__init__(tree, index, Code.JOIN_CONTEXT, **kwargs)
+        super().__init__(tree, index, Code.JOIN_CONTEXT_OMIT, **kwargs)
 
 
 class MultiBlankLineViolation(Violation):

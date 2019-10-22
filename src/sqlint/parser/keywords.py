@@ -8,17 +8,19 @@ ref) # https://cloud.google.com/bigquery/docs/reference/standard-sql/migrating-f
 RESERVED_KEYWORDS = [
     'ALL', 'AND', 'ANY', 'ARRAY', 'AS', 'ASC', 'ASSERT_ROWS_MODIFIED',
     'AT', 'BETWEEN', 'BY', 'CASE', 'COLLATE', 'CONTAINS', 'CREATE',
-    'CROSS', 'CUBE', 'CURRENT', 'DEFAULT', 'DEFINE', 'DESC', 'DISTINCT',
+    'CUBE', 'CURRENT', 'DEFAULT', 'DEFINE', 'DESC', 'DISTINCT',
     'ELSE', 'END', 'ENUM', 'ESCAPE', 'EXCEPT', 'EXCLUDE', 'EXISTS',
-    'EXTRACT', 'FALSE', 'FETCH', 'FOLLOWING', 'FOR', 'FROM', 'FULL', 'GROUP',
-    'GROUPING', 'GROUPS', 'HASH', 'HAVING', 'IGNORE', 'IN', 'INNER',
-    'INTERSECT', 'INTERVAL', 'INTO', 'IS', 'JOIN', 'LATERAL', 'LEFT',
+    'EXTRACT', 'FALSE', 'FETCH', 'FOLLOWING', 'FOR', 'FROM', 'GROUP',
+    'GROUPING', 'GROUPS', 'HASH', 'HAVING', 'IGNORE', 'IN',
+    'INTERSECT', 'INTERVAL', 'INTO', 'IS', 'JOIN', 'LATERAL',
     'LIKE', 'LIMIT', 'LOOKUP', 'MERGE', 'NATURAL', 'NEW', 'NO', 'NOT',
-    'NULL', 'NULLS', 'OF', 'ON', 'OR', 'ORDER', 'OUTER', 'OVER', 'PARTITION',
-    'PRECEDING', 'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT', 'RIGHT',
-    'ROWS', 'SELECT', 'SET', 'SOME', 'STRßUCT', 'TABLESAMPLE', 'THEN', 'TO',
+    'NULL', 'NULLS', 'OF', 'ON', 'OR', 'ORDER', 'OVER', 'PARTITION',
+    'PRECEDING', 'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT',
+    'ROWS', 'SELECT', 'SET', 'SOME', 'STRUCT', 'TABLESAMPLE', 'THEN', 'TO',
     'TREAT', 'TRUE', 'UNBOUNDED', 'UNION', 'UNNEST', 'WHEN', 'WHERE',
     'WINDOW', 'WITH', 'WITHIN',
+    # JOIN sequence
+    'JOIN', 'FULL', 'LEFT', 'RIGHT', 'OUTER', 'CROSS', 'INNER',
     # scripting(beta)
     # https://cloud.google.com/bigquery/docs/reference/standard-sql/scripting
     'DECLEAR', 'BEGIN,', 'IF', 'LOOP', 'WHILE', 'BREAK', 'LEAVE', 'CONTINUE', 'ITERATE', 'RETURN', 'CALL'

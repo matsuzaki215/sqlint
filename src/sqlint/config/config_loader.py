@@ -1,4 +1,5 @@
 import os
+import logging
 import warnings
 from typing import Optional
 from configparser import (
@@ -22,9 +23,15 @@ NAME_TYPES = {
 }
 
 
+logger = logging.getLogger(__name__)
+
+
 class ConfigLoader:
     def __init__(self, config_file: Optional[str] = DEFAULT_INI):
         self.values = {}
+
+        if not os.path.exists(DEFAULT_INI):
+            raise FileNotFoundError(f'default setting file is not found: {DEFAULT_INI}')
 
         # load default configs
         default_config = ConfigParser()
@@ -33,13 +40,17 @@ class ConfigLoader:
 
         # load user config
         self.user_config_file: Optional[str]
-        if config_file is not None and config_file != DEFAULT_INI:
+        if config_file != DEFAULT_INI:
             self.user_config_file = config_file
-            user_config = ConfigParser()
-            user_config.read(config_file)
 
-            # load user configs
-            self._load(user_config)
+            if not os.path.exists(self.user_config_file):
+                logger.warning(f'[Warning] config file is not found: {config_file}')
+            else:
+                user_config = ConfigParser()
+                user_config.read(self.user_config_file)
+
+                # load user configs
+                self._load(user_config)
 
     @staticmethod
     def _get_with_type(config_parser: ConfigParser, name: str, _type: type):
@@ -64,12 +75,8 @@ class ConfigLoader:
         return config_parser.get(SECTION, name)
 
     def _load(self, config_parser: ConfigParser):
-        """Loads config values
+        """Loads config values """
 
-        Returns:
-
-        """
-        # load default settings
         for name, _type in NAME_TYPES.items():
             try:
                 self.values[name] = self._get_with_type(config_parser, name, _type)
@@ -83,15 +90,7 @@ class ConfigLoader:
                 raise e
 
     def get(self, name, default=None):
-        """
-
-        Args:
-            name:
-            default:
-
-        Returns:
-
-        """
+        """Returns value by name"""
         if name in self.values:
             return self.values[name]
 

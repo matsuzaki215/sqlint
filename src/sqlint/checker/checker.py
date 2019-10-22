@@ -319,34 +319,39 @@ class JoinChecker(Checker):
         result: List[Violation] = []
 
         # 1. Whether join context and table name are same line.
-        result.extend(JoinChecker._check_table_name(tree))
+        result.extend(JoinChecker._check_table_existance(tree))
 
         # 2. Whether join contexts are described fully, for example [inner join], [left outer join], [right outer join]
-        keyword_style = config.keyword_style
         expected_kvs = {
-            'left': ['left', 'outer', 'join'],
-            'outer': ['left', 'outer', 'join'],
-            'right': ['right', 'outer', 'join'],
-            'inner': ['inner', 'join'],
-            'cross': ['cross', 'join'],
+            'LEFT': ['LEFT', 'OUTER', 'JOIN'],
+            'RIGHT': ['RIGHT', 'OUTER', 'JOIN'],
+            'FULL': ['FULL', 'OUTER', 'JOIN'],
+            'OUTER': ['[LEFT|RIGHT|FULL]', 'OUTER', 'JOIN'],
+            'INNER': ['INNER', 'JOIN'],
+            'CROSS': ['CROSS', 'JOIN'],
         }
         expected_list = {}
         for k, vs in expected_kvs.items():
-            expected_list[k] = ' '.join([
-                format_keyword(v, keyword_style) for v in vs])
+            _key = JoinChecker._format_str(k)
+            _value = ' '.join([JoinChecker._format_str(v) for v in vs])
+            expected_list[_key] = _value
 
         result.extend(JoinChecker._check_context(tree, expected_list))
 
         return result
 
     @staticmethod
-    def _check_table_name(tree: SyntaxTree) -> List[Violation]:
+    def _format_str(value: str) -> str:
+        return value.upper()
+
+    @staticmethod
+    def _check_table_existance(tree: SyntaxTree) -> List[Violation]:
         """Checks the token next to 'Join' is identifier(maybe table_name) or SubQuery """
         violation_list: List[Violation] = list()
 
         for leaf in tree.leaves:
             for idx, token in enumerate(leaf.tokens):
-                # ignores except join
+                # ignores token except join
                 if token.word.upper() != 'JOIN':
                     continue
 
@@ -370,10 +375,10 @@ class JoinChecker(Checker):
                         Join (Select id From y)
                     ------
                 """
-                v = violation.JoinTableViolation(tree=leaf, index=idx)
+                v = violation.JoinTableNotExistViolation(tree=leaf, index=idx)
                 violation_list.append(v)
 
-            violation_list.extend(JoinChecker._check_table_name(leaf))
+            violation_list.extend(JoinChecker._check_table_existance(leaf))
 
         return violation_list
 
@@ -388,28 +393,26 @@ class JoinChecker(Checker):
 
             for idx in join_indexes:
                 token = leaf.tokens[idx]
-                # ignores except join
-                if token.kind != Token.KEYWORD or token.word.upper() != 'JOIN':
-                    continue
 
                 # concat keyword concerned with join
                 join_contexts = [token.word]
-                expected: str = expected_list['inner']
+                # only 'JOIN' is expected INNER JOIN
+                expected: str = expected_list[JoinChecker._format_str('INNER')]
                 for tk in reversed(leaf.tokens[:idx]):
-                    if tk.kind == Token.WHITESPACE:
+                    if tk.kind in [Token.WHITESPACE, Token.COMMENT]:
                         continue
 
-                    if tk.word.upper() in ['INNER', 'OUTER', 'LEFT', 'RIGHT', 'CROSS']:
+                    word = JoinChecker._format_str(tk.word)
+                    if word in expected_list.keys():
                         join_contexts.insert(0, tk.word)
-                        if tk.word.lower() in expected_list:
-                            expected = expected_list[tk.word.lower()]
+                        expected = expected_list[word]
                     else:
                         break
 
-                join_context_str = ' '.join(join_contexts)
-                if join_context_str.upper() not in ['INNER JOIN', 'RIGHT OUTER JOIN', 'LEFT OUTER JOIN', 'CROSS JOIN']:
+                join_context_str = JoinChecker._format_str(' '.join(join_contexts))
+                if join_context_str not in expected_list.values():
                     params = {'actual': join_context_str, 'expected': expected}
-                    v = violation.JoinContextViolation(tree=leaf, index=idx, **params)
+                    v = violation.JoinContextOmitViolation(tree=leaf, index=idx, **params)
                     violation_list.append(v)
 
             violation_list.extend(JoinChecker._check_context(leaf, expected_list))
