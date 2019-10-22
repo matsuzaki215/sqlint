@@ -5,13 +5,13 @@ This is a SQL parser and linter for Standard SQL(BigQuery).
 
 ## Install
 
-pip, 
+### pip
 
 ```bash
 $ pip install sqlint
 ```
 
-repository, 
+### repository
 
 ```bash
 $ git clone git@github.com:shigeru0215/sqlint.git
@@ -19,7 +19,7 @@ $ cd sqlint
 $ python setup.py install
 ```
 
- - if you use pyenv,
+if you use pyenv, you might rehash env.
 
 ```bash
 $ pyenv rehash
@@ -27,17 +27,38 @@ $ pyenv rehash
 
 ## Usage
 
-Command line
+With no option, this tool behaves as linter.
 
 ```bash
-$ sqlint query/*sql
+$ cat example.sql
+select
+  a + b as x
+    , b+c as y
+from test_table as t1
+
+$ sqlint example.sql
+tests/samples/query001.sql (L2, 1): indent steps must be 4 multiples, but 2 spaces
+tests/samples/query001.sql (L3, 8): whitespace must be before binary operator: b+
+tests/samples/query001.sql (L3, 8): whitespace must be after binary operator: +c
+```
+
+With `-f` option, this tool behaves as SQL formatter.
+
+```bash
+$ sqlint example.sql -f
+select
+    a + b as x
+    , b + c as y
+from
+    test_table as t1
+
 ```
 
 REPL
 
 ```bash
 $ python
->>> from sqlint import parse, check
+>>> from sqlint import parse, check, format
 >>> sql = 'SELECT id From user_table  where user_table.age >10'
 >>>
 >>> parse(sql)
@@ -45,6 +66,14 @@ $ python
 >>>
 >>> check(sql)
 ['(L1, 1): reserved keywords must be lower case: SELECT -> select', '(L1, 11): reserved keywords must be lower case: From -> from', '(L1, 26): too many spaces', '(L1, 49): whitespace must be after binary operator: >10']
+>>>
+>>> format(sql)
+>>> select
+>>>     id
+>>> from
+>>>     user_table
+>>> where
+>>>     user_table.age > 10
 ```
 
 Dockerfile
@@ -81,7 +110,7 @@ Check if sql statement violates following rules.
 
 - join contexts are written fully, for example `left outer join, `inner join or `cross join`.
 
-- whether new line starts at 'on', 'or', 'and' context (except `between`).
+- ~~whether new line starts at 'on', 'or', 'and' context (except `between`).~~
 
 ## Futures
 - table_name alias doesn't equal reserved functions
@@ -93,7 +122,7 @@ Check if sql statement violates following rules.
 ## Sample
 
 ```
-$ sqlint sqlint/tests/samples/*
+$ sqlint tests/samples/*
 tests/samples/query001.sql (L2, 1): indent steps must be 4 multiples, but 5 spaces
 tests/samples/query002.sql (L6, 16): there are multiple whitespaces
 tests/samples/query003.sql (L2, 7): whitespace must not be after bracket: ( 
