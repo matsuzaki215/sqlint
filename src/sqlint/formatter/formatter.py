@@ -28,6 +28,53 @@ class KeywordStyleFormatter(Formatter):
             cls._format(leaf, keyword_style)
 
 
+class JoinFormatter(Formatter):
+    join_token = Token(word='JOIN', kind=Token.KEYWORD)
+    inner_token = Token(word='INNER', kind=Token.KEYWORD)
+    outer_token = Token(word='OUTER', kind=Token.KEYWORD)
+    left_token = Token(word='LEFT', kind=Token.KEYWORD)
+    right_token = Token(word='RIGHT', kind=Token.KEYWORD)
+    full_token = Token(word='FULL', kind=Token.KEYWORD)
+    cross_token = Token(word='CROSS', kind=Token.KEYWORD)
+
+    @classmethod
+    def format(cls, tree: SyntaxTree, config: Config):
+        cls._format(tree, config.keyword_style)
+
+    @classmethod
+    def _format(cls, tree: SyntaxTree, stlye: str):
+        for leaf in tree.leaves:
+            join_indexes = [i for i, tk in enumerate(leaf.tokens) if tk == cls.join_token]
+
+            insert_count = 0
+            for idx in join_indexes:
+                adjusted_idx = idx + insert_count
+                # checks previous 'JOIN'
+                # When only 'JOIN' is exist, format as 'INNER JOIN'
+                if adjusted_idx == 0:
+                    leaf.tokens.insert(adjusted_idx, Token(word=format_keyword('INNER', stlye), kind=Token.KEYWORD))
+                    insert_count += 1
+                    continue
+
+                prev_token = leaf.tokens[adjusted_idx-1]
+                # valid case
+                if prev_token in [cls.inner_token, cls.cross_token, cls.outer_token]:
+                    # When prev_token is 'OUTER' and previous it is not LEFT, RIGHT or FULL,
+                    # I can't determined to insert which of these, so I ignore this illegal case.
+                    continue
+                elif prev_token in [cls.left_token, cls.right_token, cls.full_token]:
+                    # When 'LEFT JOIN', 'RIGHT JOIN' or 'FULL JOIN', format as 'XXX OUTER JOIN'
+                    leaf.tokens.insert(adjusted_idx, Token(word=format_keyword('OUTER', stlye), kind=Token.KEYWORD))
+                    insert_count += 1
+                    continue
+
+                # When only 'JOIN' is exist, format like 'INNER JOIN'
+                leaf.tokens.insert(adjusted_idx, Token(word=format_keyword('INNER', stlye), kind=Token.KEYWORD))
+                insert_count += 1
+
+            cls._format(leaf, stlye)
+
+
 class CommaPositionFormatter(Formatter):
     @classmethod
     def format(cls, tree: SyntaxTree, config: Config):
@@ -43,10 +90,14 @@ class CommaPositionFormatter(Formatter):
                 cls._format_head(leaf)
                 continue
 
+            # only comma in a line
+            if len(leaf.tokens) == 1:
+                continue
+
             if idx < len(tree.leaves)-1:
                 tree.leaves[idx+1].tokens.insert(0, leaf.tokens.pop(-1))
-            elif leaf.leaves:
-                leaf.leaves[0].tokens.insert(0, leaf.tokens.pop(-1))
+            # elif leaf.leaves:
+            #     leaf.leaves[0].tokens.insert(0, leaf.tokens.pop(-1))
 
             cls._format_head(leaf)
 
@@ -58,10 +109,15 @@ class CommaPositionFormatter(Formatter):
                 cls._format_end(leaf)
                 continue
 
+            # only comma in a line
+            if len(leaf.tokens) == 1:
+                continue
+
+            poped_token = leaf.tokens.pop(0)
             if idx > 0:
-                tree.leaves[idx-1].tokens.insert(len(tree.leaves), leaf.tokens.pop(0))
-            elif leaf.parent and leaf.parent.depth > 0:
-                leaf.parent.tokens.insert(len(tree.leaves), leaf.tokens.pop(0))
+                tree.leaves[idx-1].tokens.insert(len(tree.leaves), poped_token)
+            # elif leaf.parent and leaf.parent.depth > 0:
+            #     leaf.parent.tokens.insert(len(tree.leaves), poped_token)
 
             cls._format_end(leaf)
 
@@ -145,7 +201,8 @@ class BlankLineFormatter(Formatter):
 
         while True:
             # if reaches to end of leaves
-            if len(tree.leaves) <= index:
+            if len(tree.leaves)-1 <= index:
+                tree.insert_leaf(index + 1, SyntaxTree(depth=1, line_num=0))
                 break
 
             leaf = tree.leaves[index]
@@ -155,7 +212,7 @@ class BlankLineFormatter(Formatter):
                 if (tokens[0].kind == Token.BRACKET_RIGHT) or \
                    (tokens[0].kind == Token.IDENTIFIER) or \
                    (tokens[0] in [with_token, comma_token] and len(tokens) == 2):
-                    tree.insert_leaf(index+1, SyntaxTree(depth=1, line_num=0))  # line num will be re-Numbered
+                    tree.insert_leaf(index+1, SyntaxTree(depth=1, line_num=0))
 
             except IndexError:
                 # tokens index out of range

@@ -15,5 +15,9 @@ from
         on t1.a = jt5.a
     right outer join join_table6 as jt6
         on t1.a = jt6.a
-    cross join join_table7 as jt7
+    full join join_table7 as jt7
         on t1.a = jt7.a
+    full outer join join_table8 as jt8
+        on t1.a = jt8.a
+    cross join join_table9 as jt9
+        on t1.a = jt9.a

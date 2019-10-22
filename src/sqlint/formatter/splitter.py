@@ -1,3 +1,4 @@
+import logging
 from abc import ABCMeta, abstractmethod
 from typing import List, TypeVar, Tuple
 
@@ -5,6 +6,8 @@ from sqlint.parser import Token
 from sqlint.syntax_tree import SyntaxTree
 
 T = TypeVar('T')
+
+logger = logging.getLogger(__name__)
 
 
 class Splitter(metaclass=ABCMeta):
@@ -31,6 +34,8 @@ class IdentifierSplitter(Splitter):
     def split(cls, tokens: List[Token], tree: SyntaxTree) -> Tuple[List[Token], List[List[Token]], List[Token]]:
         parent_tree = tree.parent
 
+        logger.debug(tokens)
+
         if parent_tree is None or parent_tree.depth == 0:
             # The identifier placed on root depth is illegal case.
             return tokens[0:1], [], tokens[1:]
@@ -48,6 +53,7 @@ class IdentifierSplitter(Splitter):
             Token(word='INNER', kind=Token.KEYWORD),
             Token(word='LEFT', kind=Token.KEYWORD),
             Token(word='RIGHT', kind=Token.KEYWORD),
+            Token(word='FULL', kind=Token.KEYWORD),
             Token(word='CROSS', kind=Token.KEYWORD),
             Token(word='OUTER', kind=Token.KEYWORD),
             Token(word='JOIN', kind=Token.KEYWORD)
@@ -202,7 +208,7 @@ class KeywordSplitter(Splitter):
             (['HAVING'], cls._split_having),
             (['CASE'], cls._split_case),
             (['WHEN'], cls._split_when),
-            (['INNER', 'LEFT', 'RIGHT', 'CROSS', 'OUTER', 'JOIN'], KeywordJoinSplitter.split_join),
+            (['INNER', 'LEFT', 'RIGHT', 'FULL', 'CROSS', 'OUTER', 'JOIN'], KeywordJoinSplitter.split_join),
         ]
 
         word = head.word.upper()
@@ -487,13 +493,12 @@ class KeywordSplitter(Splitter):
             bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
 
             if token.kind == Token.COMMA and bracket_count == 0:
-                result.append(tokens[start:idx + 1])
-                start = idx + 1
+                result.append(tokens[start:idx])
+                start = idx
 
         if start < len(tokens):
             result.append(tokens[start:len(tokens)])
 
-        # return [tokens]
         return result
 
 
@@ -654,13 +659,14 @@ class KeywordJoinSplitter(KeywordSplitter):
             Token(word='INNER', kind=Token.KEYWORD),
             Token(word='LEFT', kind=Token.KEYWORD),
             Token(word='RIGHT', kind=Token.KEYWORD),
+            Token(word='FULL', kind=Token.KEYWORD),
             Token(word='CROSS', kind=Token.KEYWORD),
             Token(word='OUTER', kind=Token.KEYWORD),
             Token(word='JOIN', kind=Token.KEYWORD)
         ]
         condition_tokens = [
             Token(word='ON', kind=Token.KEYWORD),
-            Token(word='USING', kind=Token.KEYWORD)
+            Token(word='USING', kind=Token.FUNCTION)
         ]
 
         try:

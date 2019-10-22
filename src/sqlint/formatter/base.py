@@ -7,7 +7,6 @@ from sqlint.config import Config
 from sqlint.parser import Token
 from sqlint.syntax_tree import SyntaxTree
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -68,12 +67,11 @@ def _reshape_tree(tree: SyntaxTree, config: Config):
     own, children, sibling = _split_tokens(tree)
     siblings = [sibling]
 
-    """DEBUG
-    if own and own[0].word.lower() == 'date_diff':
-        logger.debug(f'\033[32mown\033[0m = {own}')
-        logger.debug(f'\033[32mchildren\033[0m = {children}')
-        logger.debug(f'\033[32msibling\033[0m = {sibling}')
-    """
+    # f own and own[0].word.lower() == 'date_diff':
+    logger.debug(f'\033[32mown\033[0m = {own}')
+    logger.debug(f'\033[32mchildren\033[0m = {children}')
+    logger.debug(f'\033[32msibling\033[0m = {sibling}')
+
     tree.tokens = own
 
     # checks tokens(line) length
@@ -152,6 +150,7 @@ def _format_tree(tree: SyntaxTree, config: Config):
     # formetter order is important
     formatter_list = [
         fmt.KeywordStyleFormatter,
+        fmt.JoinFormatter,
         fmt.CommaPositionFormatter,
         fmt.IndentStepsFormatter,
         fmt.BlankLineFormatter,
