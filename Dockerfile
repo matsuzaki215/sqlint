@@ -13,5 +13,6 @@ COPY requirements.txt /tmp
 RUN pip install --upgrade pip
 RUN pip3 install -r /tmp/requirements.txt
 
-COPY . /work
+COPY src /work
+COPY tests /work/tests
 WORKDIR /work

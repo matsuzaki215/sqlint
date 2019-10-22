@@ -1,8 +1,8 @@
 from abc import ABCMeta, abstractmethod
 from typing import List, TypeVar, Tuple
 
-from src.parser import Token
-from src.syntax_tree import SyntaxTree
+from sqlint.parser import Token
+from sqlint.syntax_tree import SyntaxTree
 
 T = TypeVar('T')
 

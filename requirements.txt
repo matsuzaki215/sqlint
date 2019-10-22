@@ -1,6 +1,2 @@
 click==7.0
-configparser>=4.0
-# requirements for test
-pytest>=5.2.0
-pytest-cov>=2.8.0
-flake8>=3.7.8
+configparser==4.0.2

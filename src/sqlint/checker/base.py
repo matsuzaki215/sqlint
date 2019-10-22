@@ -2,8 +2,8 @@ from typing import List
 
 from . import checker as chk
 from .violation import Violation
-from src.syntax_tree import SyntaxTree
-from src.config import Config
+from sqlint.syntax_tree import SyntaxTree
+from sqlint.config import Config
 
 
 def check(tree: SyntaxTree, config: Config) -> List[Violation]:
