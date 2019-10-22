@@ -65,13 +65,27 @@ class Violation:
         self.code: Code = code
         self.params: Dict = kwargs
 
+    @property
+    def line_num(self):
+        return self.tree.line_num
+
+    @property
+    def pos(self):
+        return self.tree.get_position(self.index)
+
     def __str__(self):
         _template = '(L{line}, {pos}): ' + self.code.template
 
         return _template.format(
-            line=self.tree.node.line_num,
-            pos=self.tree.get_position(self.index),
+            line=self.line_num,
+            pos=self.pos,
             **self.params)
+
+    def __lt__(self, other):
+        if self.line_num == other.line_num:
+            return self.pos < other.pos
+
+        return self.line_num < other.line_num
 
 
 class IndentStepsViolation(Violation):

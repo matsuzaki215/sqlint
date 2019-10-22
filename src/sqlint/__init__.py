@@ -6,7 +6,7 @@ from .parser import parse as parse_sql
 from .checker import check as check_sql
 from .formatter import format as format_sql
 
-__version__ = '0.2.2'
+__version__ = '0.2.4'
 
 __all__ = [
     'parse',
@@ -35,7 +35,7 @@ def parse(sql: str):
 
 def check(sql: str):
     tree = SyntaxTree.sqlptree(sql)
-    for v in check_sql(tree, Config()):
+    for v in sorted(check_sql(tree, Config())):
         logger.info(v)
 
 

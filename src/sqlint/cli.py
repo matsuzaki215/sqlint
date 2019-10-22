@@ -59,7 +59,7 @@ def main(files, config_file, is_format):
             logger.info(formatted_tree.sqlftree())
         else:
             tree.sqlftree()
-            for v in check_tree(tree, config):
+            for v in sorted(check_tree(tree, config)):
                 logger.info('{} {}'.format(file, v))
 
 

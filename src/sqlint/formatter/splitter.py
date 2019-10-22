@@ -203,9 +203,10 @@ class KeywordSplitter(Splitter):
             (['SELECT'], KeywordSelectSplitter.split_select),
             (['FROM'], cls._split_from),
             (['WHERE'], KeywordWhereSplitter.split_where),
-            (['ORDER'], cls._split_order),
-            (['GROUP'], cls._split_split),
-            (['HAVING'], cls._split_having),
+            (['ORDER'], cls._split_orderby),
+            (['GROUP'], cls._split_groupby),
+            (['HAVING'], KeywordHavingSplitter.split_having),
+            (['LIMIT'], cls._split_limit),
             (['CASE'], cls._split_case),
             (['WHEN'], cls._split_when),
             (['INNER', 'LEFT', 'RIGHT', 'FULL', 'CROSS', 'OUTER', 'JOIN'], KeywordJoinSplitter.split_join),
@@ -219,6 +220,73 @@ class KeywordSplitter(Splitter):
                 return func(tokens)
 
         return tokens, [], []
+
+    @classmethod
+    def _split_groupby(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits GROUP BY sequence """
+
+        group_token = Token(word='GROUP', kind=Token.KEYWORD)
+        stoppers = [
+            Token(word='SELECT', kind=Token.KEYWORD),
+            Token(word='WHERE', kind=Token.KEYWORD),
+            Token(word='ORDER', kind=Token.KEYWORD),
+            Token(word='HAVING', kind=Token.KEYWORD),
+            Token(word='LIMIT', kind=Token.KEYWORD),
+        ]
+
+        # Explores tokens until GROUP is closed by condition sequence corresponding it.
+        group_count = 1
+        bracket_count = 0
+        for idx, token in enumerate(tokens[1:]):
+            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
+            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
+
+            if token == group_token and bracket_count == 0:
+                group_count += 1
+
+            if token in stoppers and group_count == 1 and bracket_count == 0:
+                if len(tokens) >= 3 and tokens[2].kind == Token.BRACKET_LEFT:
+                    return tokens[0:3], [tokens[3:idx+1]], tokens[idx+1:]
+                else:
+                    return tokens[0:2], [tokens[2:idx+1]], tokens[idx+1:]
+
+        return tokens[0:2], [tokens[2:]], []
+
+    @classmethod
+    def _split_orderby(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits ORDER BY sequence """
+
+        order_token = Token(word='ORDER', kind=Token.KEYWORD)
+        stoppers = [
+            Token(word='SELECT', kind=Token.KEYWORD),
+            Token(word='WHERE', kind=Token.KEYWORD),
+            Token(word='GROUP', kind=Token.KEYWORD),
+            Token(word='HAVING', kind=Token.KEYWORD),
+            Token(word='LIMIT', kind=Token.KEYWORD),
+        ]
+
+        # Explores tokens until GROUP is closed by condition sequence corresponding it.
+        order_count = 1
+        bracket_count = 0
+        for idx, token in enumerate(tokens[1:]):
+            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
+            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
+
+            if token == order_token and bracket_count == 0:
+                order_count += 1
+
+            if token in stoppers and order_count == 1 and bracket_count == 0:
+                if len(tokens) >= 3 and tokens[2].kind == Token.BRACKET_LEFT:
+                    return tokens[0:3], [tokens[3:idx + 1]], tokens[idx + 1:]
+                else:
+                    return tokens[0:2], [tokens[2:idx + 1]], tokens[idx + 1:]
+
+        return tokens[0:2], [tokens[2:]], []
+
+    @classmethod
+    def _split_limit(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits ORDER BY sequence """
+        return tokens[0:1], [tokens[1:]], []
 
     @classmethod
     def _split_create(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
@@ -343,14 +411,7 @@ class KeywordSplitter(Splitter):
 
     @classmethod
     def _split_from(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Splits FROM sequence
-
-        Args:
-            tokens:
-
-        Returns:
-
-        """
+        """Splits FROM sequence """
 
         from_token = Token(word='FROM', kind=Token.KEYWORD)
         stoppers = [
@@ -359,6 +420,7 @@ class KeywordSplitter(Splitter):
             Token(word='ORDER', kind=Token.KEYWORD),
             Token(word='GROUP', kind=Token.KEYWORD),
             Token(word='HAVING', kind=Token.KEYWORD),
+            Token(word='LIMIT', kind=Token.KEYWORD),
         ]
 
         # Explores tokens until FROM is closed by condition sequence corresponding it.
@@ -375,44 +437,8 @@ class KeywordSplitter(Splitter):
                 if tokens[1].kind == Token.BRACKET_LEFT:
                     return tokens[0:2], [tokens[2:idx+1]], tokens[idx+1:]
                 else:
-                    return tokens[0:1], [tokens[1:idx + 1]], tokens[idx + 1:]
+                    return tokens[0:1], [tokens[1:idx+1]], tokens[idx+1:]
 
-        return tokens[0:1], [tokens[1:]], []
-
-    @classmethod
-    def _split_split(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Splits GROIP BY sequence
-
-        Args:
-            tokens:
-
-        Returns:
-
-        """
-        return tokens[0:2], [tokens[2:]], []
-
-    @classmethod
-    def _split_order(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Splits ORDER BY sequence
-
-        Args:
-            tokens:
-
-        Returns:
-
-        """
-        return tokens[0:2], [tokens[2:]], []
-
-    @classmethod
-    def _split_having(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
-        """Splits ORDER BY sequence
-
-        Args:
-            tokens:
-
-        Returns:
-
-        """
         return tokens[0:1], [tokens[1:]], []
 
     @classmethod
@@ -530,6 +556,7 @@ class KeywordSelectSplitter(KeywordSplitter):
             Token(word='ORDER', kind=Token.KEYWORD),
             Token(word='GROUP', kind=Token.KEYWORD),
             Token(word='HAVING', kind=Token.KEYWORD),
+            Token(word='LIMIT', kind=Token.KEYWORD),
         ]
 
         # Explores tokens until SELECT is closed by FROM corresponding it.
@@ -568,6 +595,7 @@ class KeywordWhereSplitter(KeywordSplitter):
             Token(word='ORDER', kind=Token.KEYWORD),
             Token(word='GROUP', kind=Token.KEYWORD),
             Token(word='HAVING', kind=Token.KEYWORD),
+            Token(word='LIMIT', kind=Token.KEYWORD),
         ]
 
         # Explores tokens until FROM is closed by condition sequence corresponding it.
@@ -641,6 +669,39 @@ class KeywordWhereSplitter(KeywordSplitter):
             result.append(tokens[start:len(tokens)])
 
         return result
+
+
+class KeywordHavingSplitter(KeywordSplitter):
+    @classmethod
+    def split_having(cls, tokens: List[Token]) -> Tuple[List[Token], List[List[Token]], List[Token]]:
+        """Splits Having sequence """
+
+        having_token = Token(word='HAVING', kind=Token.KEYWORD)
+        stoppers = [
+            Token(word='SELECT', kind=Token.KEYWORD),
+            Token(word='WHERE', kind=Token.KEYWORD),
+            Token(word='ORDER', kind=Token.KEYWORD),
+            Token(word='GROUP', kind=Token.KEYWORD),
+            Token(word='LIMIT', kind=Token.KEYWORD),
+        ]
+
+        # Explores tokens until FROM is closed by condition sequence corresponding it.
+        having_count = 1
+        bracket_count = 0
+        for idx, token in enumerate(tokens[1:]):
+            bracket_count += (1 if token.kind == Token.BRACKET_LEFT else 0)
+            bracket_count += (-1 if token.kind == Token.BRACKET_RIGHT else 0)
+
+            if token == having_token and bracket_count == 0:
+                having_count += 1
+
+            if token in stoppers and having_count == 1 and bracket_count == 0:
+                return (
+                    tokens[0:1],
+                    KeywordWhereSplitter.split_condiction(tokens[1:idx+1]),
+                    tokens[idx+1:])
+
+        return tokens[0:1], KeywordWhereSplitter.split_condiction(tokens[1:]), []
 
 
 class KeywordJoinSplitter(KeywordSplitter):
