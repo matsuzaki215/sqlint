@@ -1,0 +1,18 @@
+{
+  "name": "Sample",
+  "version": "1.0.0",
+  "manifest_version": 2,
+  "description": "Sample Chrome Extension",
+  "content_scripts": [{
+    "matches": ["https://console.cloud.google.com/bigquery*"],
+    "js": [
+      "config.js",
+      "keywords.js",
+      "patterns.js",
+      "utils.js",
+      "token.js",
+      "parser.js",
+      "content.js"
+    ]
+  }]
+}
