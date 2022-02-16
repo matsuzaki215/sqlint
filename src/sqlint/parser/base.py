@@ -1,5 +1,9 @@
 import re
-from sre_parse import Pattern
+# Rename class Pattern in sre_parse to State. https://github.com/python/cpython/pull/9310
+try:
+    from sre_parse import Pattern
+except ImportError:
+    from sre_parse import State as Pattern
 from typing import List, Tuple
 
 from . import pattern

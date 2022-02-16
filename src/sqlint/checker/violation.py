@@ -96,7 +96,7 @@ class IndentStepsViolation(Violation):
 class KeywordStyleViolation(Violation):
     def __init__(self, tree: SyntaxTree, index: int, **kwargs):
         if 'style' not in kwargs:
-            raise KeyError(f'style must be passed.')
+            raise KeyError('style must be passed.')
 
         style = kwargs['style']
 
@@ -134,9 +134,9 @@ class MultiSpacesViolation(Violation):
 class WhitespaceViolation(Violation):
     def __init__(self, tree: SyntaxTree, index: int, **kwargs):
         if 'token' not in kwargs:
-            raise KeyError(f'token must be passed.')
+            raise KeyError('token must be passed.')
         if 'position' not in kwargs:
-            raise KeyError(f'position must be passed.')
+            raise KeyError('position must be passed .')
 
         self.token = kwargs['token']
         self.position = kwargs['position']
